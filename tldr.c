@@ -285,29 +285,23 @@ display_page(char *pages_path, const char *page_name, FILE *indexp)
 	char *chp;
 
 	while (fgets(buf, MAX_INDEX_ENTRY, indexp) != NULL) {
+		chp = strchr(buf, '\n');
+		*chp = '\0';
 		chp = strchr(buf, '/');
 		*chp = '\0';
 		/* -3 stands for minus the file extension '.md' */
-		if (!strncmp(page_name, buf, strlen(buf) - 3)) {
-			/* Append '/' to the path */
+		if ((!strncmp(page_name, buf, strlen(buf) - 3)) &&
+		    (strlen(page_name) == (strlen(buf) - 3))) {
 			strcat(pages_path, "/");
-			/* Append a platform to the path */
 			strcat(pages_path, strchr(buf, '\0') + 1);
-			/* Get rid of '\n' */
-			chp = strchr(pages_path, '\n');
-			*chp = '\0';
-			/* Append '/' to the path */
 			strcat(pages_path, "/");
-			/* Append page's name with the extension */
 			strcat(pages_path, buf);
-			
-			/* Get rid of '\n' at the platform's end */
-			chp = strchr(strchr(buf, '\0') + 1, '\n');
-			*chp = '\0';
+
 			cat_page(pages_path, strchr(buf, '\0') + 1);
-			break;
+			return;
 		}
 	}
+	puts("The page has not been found.");
 }
 
 
