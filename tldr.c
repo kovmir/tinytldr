@@ -127,7 +127,7 @@ cat_page(const char *page_path, const char *platform)
 	}
 }
 
-/* Print instructions on how to use the program */
+/* Print instructions on how to use the program. */
 void
 print_help(void)
 {
@@ -141,7 +141,7 @@ print_help(void)
 		"  Show examples for this command\n");
 }
 
-/* Print the list of all available pages */
+/* Print the list of all available pages. */
 void
 list_pages(FILE * indexp)
 {
@@ -213,7 +213,7 @@ extract_pages(void)
 		panic("Failed to open the archive for reading; "
 		      "archive error code is ", STRINGIZE(status));
 
-	/* A place inside the archive to extract pages from */
+	/* A place inside the archive to extract pages from. */
 	strcpy(archive_path, "tldr-master");
 	strcat(archive_path, PAGES_LANG);
 	strcat(archive_path, "/");
@@ -224,7 +224,7 @@ extract_pages(void)
 		if (strncmp(archive_entry_pathname(aep),
 		    archive_path, strlen(archive_path)))
 			break;
-		/* A place to put the extracted pages to */
+		/* A place to put the extracted pages to. */
 		strcpy(page_path, getenv("HOME"));
 		strcat(page_path, PAGES_PATH);
 		strcat(page_path, strchr(strchr(archive_entry_pathname(aep),'/')
@@ -240,8 +240,8 @@ extract_pages(void)
 }
 
 /*
- * Create an plain text file with that serves as a database
- * with pages and their location
+ * Create a plain text file with that serves as a database
+ * with pages and their location.
  */
 void
 create_index(const char *pages_path, FILE *indexp)
@@ -292,7 +292,7 @@ display_page(char *pages_path, const char *page_name, FILE *indexp,
 		*chp = '\0';
 		chp = strchr(buf, '/');
 		*chp = '\0';
-		/* -3 stands for minus the file extension '.md' */
+		/* -3 stands for minus the file extension '.md'. */
 		if ((!strncmp(page_name, buf, strlen(buf) - 3)) &&
 		    (strlen(page_name) == (strlen(buf) - 3))) {
 			/*
@@ -303,7 +303,7 @@ display_page(char *pages_path, const char *page_name, FILE *indexp,
 			    strcmp(platform, strchr(buf, '\0') + 1))
 				continue;
 
-			/* A path to the page */
+			/* A path to the page. */
 			strcat(pages_path, "/");
 			strcat(pages_path, strchr(buf, '\0') + 1);
 			strcat(pages_path, "/");
@@ -355,21 +355,21 @@ main(int argc, char **argv)
 		indexp = fopen(path, WRITE_MODE);
 		if (indexp == NULL)
 			panic("Failed to create the index file", NULL);
-		/* Path to the pages */
+		/* Path to the pages. */
 		strcpy(path, getenv("HOME"));
 		strcat(path, PAGES_PATH);
 		create_index(path, indexp);
 		fclose(indexp);
 		puts("Done.");
 	} else if (!strcmp(OPTION, "-l") || !strcmp(OPTION, "--list")) {
-		/* List available pages */
+		/* List available pages. */
 		indexp = fopen(path, READ_MODE);
 		if (indexp == NULL)
 			panic("Failed to read the index file; ", "Run tldr --update");
 		list_pages(indexp);
 		fclose(indexp);
 	} else if (!strcmp(OPTION, "-p") || !strcmp(OPTION, "--platform")) {
-		/* Display a platform specific page */
+		/* Display a platform specific page. */
 		if (*(argv + 3) == NULL)
 			panic("No platform/page specified", NULL);
 		indexp = fopen(path, READ_MODE);
@@ -379,7 +379,7 @@ main(int argc, char **argv)
 		strcat(path, PAGES_PATH);
 		display_page(path, *(argv + 3), indexp, *(argv + 2));
 	} else {
-		/* Display a page */
+		/* Display a page. */
 		indexp = fopen(path, READ_MODE);
 		if (indexp == NULL)
 			panic("Failed to read the index file; ", "Run tldr --update");
