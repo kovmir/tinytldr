@@ -42,4 +42,4 @@ clean:
 install:
 	cp $(PROJECT) $(PREFIX)/bin/$(PROJECT)
 
-.PHONY: all debug gdb memcheck memcheck_v memcheck_full clean
+.PHONY: all debug gdb memcheck memcheck_v memcheck_full clean install
