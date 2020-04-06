@@ -50,7 +50,8 @@ static void list_pages(FILE *indexp);
 static void fetch_pages(void);
 static void extract_pages(void);
 static void create_index(const char *pages_path, FILE *indexp);
-static void display_page(char *pages_path, const char *page_name, FILE *indexp);
+static void display_page(char *pages_path, const char *page_name, FILE *indexp,
+			 const char *platform);
 
 /* Global variables */
 static const char *RESET_STYLING = "\033[0m";
@@ -133,6 +134,7 @@ print_help(void)
 	printf("USAGE: tldr [options] <command>\n\n"
 		"[options]\n"
 		"  -l, --list:       show all available pages\n"
+		"  -p, --platform    Display a platform specific page\n"
 		"  -u, --update:     fetch lastest copies of cached pages\n"
 		"  -h, --help:       this help overview\n\n"
 		"<command>\n"
@@ -279,7 +281,8 @@ create_index(const char *pages_path, FILE *indexp)
 }
 
 void
-display_page(char *pages_path, const char *page_name, FILE *indexp)
+display_page(char *pages_path, const char *page_name, FILE *indexp,
+	     const char *platform)
 {
 	char buf[MAX_INDEX_ENTRY];
 	char *chp;
@@ -292,6 +295,15 @@ display_page(char *pages_path, const char *page_name, FILE *indexp)
 		/* -3 stands for minus the file extension '.md' */
 		if ((!strncmp(page_name, buf, strlen(buf) - 3)) &&
 		    (strlen(page_name) == (strlen(buf) - 3))) {
+			/*
+			 * If the platform is specified and does not match
+			 * then keep searching.
+			 */
+			if (platform != NULL &&
+			    strcmp(platform, strchr(buf, '\0') + 1))
+				continue;
+
+			/* A path to the page */
 			strcat(pages_path, "/");
 			strcat(pages_path, strchr(buf, '\0') + 1);
 			strcat(pages_path, "/");
@@ -301,7 +313,7 @@ display_page(char *pages_path, const char *page_name, FILE *indexp)
 			return;
 		}
 	}
-	puts("The page has not been found.");
+	panic("The page has not been found.", NULL);
 }
 
 
@@ -356,6 +368,16 @@ main(int argc, char **argv)
 			panic("Failed to read the index file; ", "Run tldr --update");
 		list_pages(indexp);
 		fclose(indexp);
+	} else if (!strcmp(OPTION, "-p") || !strcmp(OPTION, "--platform")) {
+		/* Display a platform specific page */
+		if (*(argv + 3) == NULL)
+			panic("No platform/page specified", NULL);
+		indexp = fopen(path, READ_MODE);
+		if (indexp == NULL)
+			panic("Failed to read the index file; ", "Run tldr --update");
+		strcpy(path, getenv("HOME"));
+		strcat(path, PAGES_PATH);
+		display_page(path, *(argv + 3), indexp, *(argv + 2));
 	} else {
 		/* Display a page */
 		indexp = fopen(path, READ_MODE);
@@ -363,6 +385,6 @@ main(int argc, char **argv)
 			panic("Failed to read the index file; ", "Run tldr --update");
 		strcpy(path, getenv("HOME"));
 		strcat(path, PAGES_PATH);
-		display_page(path, OPTION, indexp);
+		display_page(path, OPTION, indexp, NULL);
 	}
 }
