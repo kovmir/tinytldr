@@ -133,7 +133,6 @@ print_help(void)
 	printf("USAGE: tldr [options] <command>\n\n"
 		"[options]\n"
 		"  -l, --list:       show all available pages\n"
-		"  -p, --platform:   show page from specific platform\n"
 		"  -u, --update:     fetch lastest copies of cached pages\n"
 		"  -h, --help:       this help overview\n\n"
 		"<command>\n"
