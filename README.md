@@ -1,5 +1,5 @@
 # tldr
-Minimalist tldr command line client, written in plain C99.
+Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
 # FEATURES
 * It builds.
