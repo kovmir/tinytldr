@@ -186,10 +186,10 @@ void
 list_pages(void)
 {
 	char buf[BUF_SIZE];
-
-	tldr_index = open_index("w");
-	while(fgets(buf, BUF_SIZE, tldr_index))
-		printf("%s", strchr(buf+1, '/')+1);
+	tldr_index = open_index("r");
+	while(fgets(buf, BUF_SIZE, tldr_index)) {
+		printf("%s", buf);
+	}
 	fclose(tldr_index);
 }
 
