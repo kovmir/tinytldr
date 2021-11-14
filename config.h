@@ -26,4 +26,5 @@ static const char *PAGES_LANG = "/pages"; /* English */
 /* Colors and styling. */
 static const char *HEADING_STYLE = "\033[31m";
 static const char *SUBHEADING_STYLE = "\033[4m";
+static const char *COMMAND_DESC_STYLE = "\033[22;32m";
 static const char *COMMAND_STYLE = "\033[1m";

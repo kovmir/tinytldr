@@ -52,6 +52,7 @@ static FILE *open_index(const char *mode);
 
 #include "config.h"
 
+static const char *RESET_STYLING = "\033[0m";
 /* Index file to hold available page names. */
 static FILE *tldr_index;
 
@@ -204,11 +205,15 @@ find_page(const char *page_name)
 	while(fgets(buf, BUF_SIZE, tldr_index)) {
 		/* page_name is either 'command' or 'platform/command'. */
 		if (strchr(page_name, '/')) { /* platform/command */
-			if(!strcmp(page_filename, buf))
+			if(!strcmp(page_filename, buf)) {
+				*strchr(buf, '\n') = '\0';
 				return buf;
+			}
 		} else { /* command */
-			if (!strcmp(page_filename, strchr(buf, '/')+1))
+			if (!strcmp(page_filename, strchr(buf, '/')+1)) {
+				*strchr(buf, '\n') = '\0';
 				return buf;
+			}
 		}
 	}
 	fclose(tldr_index);
@@ -223,7 +228,36 @@ display_page(const char *page_name)
 		puts("The page has not been found.");
 		exit(1);
 	}
-	printf("%s", page_path);
+
+	char buf[BUF_SIZE];
+	FILE *page;
+	strcpy(buf, getenv("HOME"));
+	strcat(buf, PAGES_PATH);
+	strcat(buf, PAGES_LANG);
+	strcat(buf, "/");
+	strcat(buf, page_path);
+
+	page = fopen(buf, "r");
+	while (fgets(buf, BUF_SIZE, page)) {
+		if (!strcmp(buf, "\n")) {
+			/* Skip empty lines. */
+			continue;
+		}
+		if (buf[0] == '#') {
+			printf("%s%s%s", HEADING_STYLE, buf, RESET_STYLING);
+		}
+		if (buf[0] == '>') {
+			printf("%s%s%s", SUBHEADING_STYLE, buf, RESET_STYLING);
+		}
+		if (buf[0] == '-') {
+			printf("%s%s%s", COMMAND_DESC_STYLE, buf, RESET_STYLING);
+		}
+		if (buf[0] == '`') {
+			printf("%s%s%s", COMMAND_STYLE, buf, RESET_STYLING);
+		}
+
+	}
+	fclose(page);
 }
 
 FILE *
