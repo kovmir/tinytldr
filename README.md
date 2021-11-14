@@ -1,11 +1,11 @@
 # tldr
 Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
-# FEATURES
+# KILLER FEATURES
 * It builds.
 * And then works.
-* Under 400 lines.
-* No dependencies.
+* Under 300 lines.
+* Depends on nothing but libcurl and libarchive.
 
 # QUICK START
 Clone this repository and enter it:
@@ -24,7 +24,13 @@ sudo make install
 
 Run
 ```
-tldr --update
+tldr -u
+```
+
+To view a page
+```
+tldr cd
+tldr windows/scoop # Or one could specify a platform.
 ```
 
 # LICENSE
