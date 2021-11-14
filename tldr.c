@@ -15,15 +15,19 @@
  */
 
 /* Includes */
+#include <archive.h>
+#include <archive_entry.h>
+#include <curl/curl.h>
+#include <dirent.h>
+#include <ftw.h>
+#include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <curl/curl.h>
-#include <archive.h>
-#include <archive_entry.h>
 
 /* Constants and Macros */
 #define MAX_PATH 1024
+#define D_NAME entry->d_name
 
 /* Function prototypes */
 /* Print error message and terminate the execution */
@@ -34,8 +38,9 @@ static void  tldr_usage(void);
 static void  fetch_pages(void);
 /* Extracts pages and put them in place. */
 static void  extract_pages(void);
-/* Creates .csv index file of all pages. */
+/* Creates index file of all pages. */
 static void  index_pages(void);
+static int   ftw_callback(const char *path, const struct stat *sb, int typeflag);
 /* Prints all page names. */
 static void  list_pages(void);
 /* Returns a file path to a given page. */
@@ -44,6 +49,9 @@ static char *find_page(const char *page_name);
 static void  display_page(const char *page_path);
 
 #include "config.h"
+
+/* Index file to hold available page names. */
+static FILE *tldr_index;
 
 inline void
 error_terminate(const char *msg, const char *details)
@@ -152,7 +160,32 @@ extract_pages(void)
 void
 index_pages(void)
 {
+	char path_buf[PATH_MAX];
+	/* Construct the index path. */
+	strcpy(path_buf, getenv("HOME"));
+	strcat(path_buf, PAGES_PATH);
+	strcat(path_buf, "/index");
 
+	tldr_index = fopen(path_buf, "w");
+	if (!tldr_index)
+		error_terminate("Failed to open index", NULL);
+
+	/* Construct the pages path. */
+	strcpy(path_buf, getenv("HOME"));
+	strcat(path_buf, PAGES_PATH);
+	strcat(path_buf, PAGES_LANG);
+
+	ftw(path_buf, ftw_callback, 10);
+	fclose(tldr_index);
+}
+
+int
+ftw_callback(const char *path, const struct stat *sb, int typeflag)
+{
+	(void)sb; /* Suppress compiler warnings about unused *sb. */
+	if (strcmp(PAGES_LANG, strstr(path, PAGES_LANG))) /* Skip the directory itself. */
+		fprintf(tldr_index, "%s\n", strstr(path, PAGES_LANG));
+	return 0;
 }
 
 void
