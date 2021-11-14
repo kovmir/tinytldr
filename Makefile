@@ -10,21 +10,19 @@ CFLAGS += -Wundef
 
 CFLAGS += -D_DEFAULT_SOURCE
 
-LDFLAGS  = -lcurl
-LDFLAGS += -larchive
+LDFLAGS = -lcurl -larchive
 
 PREFIX = /usr/local
-
 PROJECT = tldr
 
 all:
-	$(CC) $(CFLAGS) $(LDFLAGS) *.c -o $(PROJECT)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(PROJECT).c -o $(PROJECT)
 
 debug:
-	$(CC) $(CFLAGS) $(LDFLAGS) -g *.c -o $(PROJECT)
+	$(CC) $(CFLAGS) $(LDFLAGS) -g $(PROJECT).c -o $(PROJECT)
 
 gdb: debug
-	gdb $(PROJECT)
+	gdb ./$(PROJECT)
 
 memcheck: debug
 	valgrind --leak-check=yes ./$(PROJECT)
@@ -39,6 +37,9 @@ clean:
 	rm $(PROJECT)
 
 install:
-	cp $(PROJECT) $(PREFIX)/bin/$(PROJECT)
+	install $(PROJECT) $(DESTDIR)$(PREFIX)/bin/$(PROJECT)
 
-.PHONY: all debug gdb memcheck memcheck_v memcheck_full clean install
+uninstall:
+	rm $(DESTDIR)$(PREFIX)/bin/$(PROJECT)
+
+.PHONY: all debug gdb memcheck memcheck_v memcheck_full clean install uninstall
