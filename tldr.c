@@ -26,7 +26,7 @@
 #include <string.h>
 
 /* Constants and Macros */
-#define MAX_PATH 1024
+#define BUF_SIZE 1024
 #define D_NAME entry->d_name
 
 /* Function prototypes */
@@ -109,8 +109,8 @@ fetch_pages(void)
 void
 extract_pages(void)
 {
-	char page_path[MAX_PATH]; /* Path to save pages. */
-	char archive_path[MAX_PATH]; /* Path within archive to extract from. */
+	char page_path[BUF_SIZE]; /* Path to save pages. */
+	char archive_path[BUF_SIZE]; /* Path within archive to extract from. */
 	FILE *tldr_archive;
 	int ares; /* libarchive status. */
 	struct archive *ap;
@@ -160,22 +160,22 @@ extract_pages(void)
 void
 index_pages(void)
 {
-	char path_buf[PATH_MAX];
+	char buf[BUF_SIZE];
 	/* Construct the index path. */
-	strcpy(path_buf, getenv("HOME"));
-	strcat(path_buf, PAGES_PATH);
-	strcat(path_buf, "/index");
+	strcpy(buf, getenv("HOME"));
+	strcat(buf, PAGES_PATH);
+	strcat(buf, "/index");
 
-	tldr_index = fopen(path_buf, "w");
+	tldr_index = fopen(buf, "w");
 	if (!tldr_index)
 		error_terminate("Failed to open index", NULL);
 
 	/* Construct the pages path. */
-	strcpy(path_buf, getenv("HOME"));
-	strcat(path_buf, PAGES_PATH);
-	strcat(path_buf, PAGES_LANG);
+	strcpy(buf, getenv("HOME"));
+	strcat(buf, PAGES_PATH);
+	strcat(buf, PAGES_LANG);
 
-	ftw(path_buf, ftw_callback, 10);
+	ftw(buf, ftw_callback, 10);
 	fclose(tldr_index);
 }
 
