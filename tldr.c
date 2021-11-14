@@ -270,7 +270,8 @@ open_index(const char *mode)
 	strcat(buf, "/index");
 	fp = fopen(buf, mode);
 	if (!fp)
-		error_terminate("Failer to open index", mode);
+		error_terminate("Failer to open index, "
+		    "probably you should run 'tldr -u'", mode);
 	return fp;
 }
 
