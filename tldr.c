@@ -184,7 +184,7 @@ ftw_callback(const char *path, const struct stat *sb, int typeflag)
 {
 	(void)sb; /* Suppress compiler warnings about unused *sb. */
 	if (typeflag == FTW_F)
-		fprintf(tldr_index, "%s\n", strstr(path, PAGES_LANG));
+		fprintf(tldr_index, "%s\n", strchr(strstr(path, PAGES_LANG)+1, '/')+1);
 	return 0;
 }
 
