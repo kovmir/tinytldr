@@ -18,62 +18,89 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <curl/curl.h>
+#include <archive.h>
+#include <archive_entry.h>
+
+/* Constants and Macros */
+#define MAX_PATH 1024
 
 /* Function prototypes */
 /* Print error message and terminate the execution */
-void  error_terminate(const char *msg, const char *details);
+static void  error_terminate(const char *msg, const char *details);
 /* Prints instructions on how to use the program. */
-void  tldr_usage(void);
+static void  tldr_usage(void);
 /* Downloads pages. */
-void  fetch_pages(void);
+static void  fetch_pages(void);
 /* Extracts pages and put them in place. */
-void  extract_pages(void);
+static void  extract_pages(void);
 /* Creates .csv index file of all pages. */
-void  index_pages(void);
+static void  index_pages(void);
 /* Prints all page names. */
-void  list_pages(void);
+static void  list_pages(void);
 /* Returns a file path to a given page. */
-char *find_page(const char *page_name);
+static char *find_page(const char *page_name);
 /* Prints a given page. */
-void  display_page(const char *page_path);
+static void  display_page(const char *page_path);
 
-void
+#include "config.h"
+
+inline void
 error_terminate(const char *msg, const char *details)
 {
-	fprintf(stderr, "%s; Details: %s\n", msg, details);
+	fprintf(stderr, "%s; details: %s.\n", msg, details? details : "none");
 	exit(1);
 }
 
-void
+inline void
 tldr_usage(void)
 {
 	printf("USAGE: tldr [options] <[platform,]command>\n\n"
-		"[options]\n"
-		"\t-h:\tthis help overview\n"
-		"\t-l:\tshow all available pages\n"
-		"\t-u:\tfetch lastest copies of cached pages\n\n"
-		"[platform]\n"
-		"\tandroid\n"
-		"\tcommon\n"
-		"\tindex\n"
-		"\tlinux\n"
-		"\tosx\n"
-		"\tsunos\n"
-		"\twindows\n\n"
-		"\t<command>\n"
-		"\tShow examples for this command\n");
+	    "[options]\n"
+	    "\t-h:\tthis help overview\n"
+	    "\t-l:\tshow all available pages\n"
+	    "\t-u:\tfetch lastest copies of cached pages\n\n"
+	    "[platform]\n"
+	    "\tandroid\n"
+	    "\tcommon\n"
+	    "\tindex\n"
+	    "\tlinux\n"
+	    "\tosx\n"
+	    "\tsunos\n"
+	    "\twindows\n\n"
+	    "\t<command>\n"
+	    "\tShow examples for this command\n");
 }
 
 void
 fetch_pages(void)
 {
+	CURL *ceh; /* cURL easy handle. */
+	CURLcode cres; /* cURL operation result. */
+	char err_curl[CURL_ERROR_SIZE]; /* Curl error message buffer. */
+	FILE *tldr_archive; /* File to download to. */
 
+	tldr_archive = fopen(PAGES_TMP, "w");
+	if (!tldr_archive)
+		error_terminate("Failed to create a temporary file", NULL);
+
+	curl_global_init(CURL_GLOBAL_ALL);
+	ceh = curl_easy_init();
+	curl_easy_setopt(ceh, CURLOPT_WRITEDATA, tldr_archive);
+	curl_easy_setopt(ceh, CURLOPT_URL, PAGES_URL);
+	curl_easy_setopt(ceh, CURLOPT_ERRORBUFFER, err_curl);
+
+	cres = curl_easy_perform(ceh);
+	curl_easy_cleanup(ceh);
+	curl_global_cleanup();
+	fclose(tldr_archive);
+	if (cres != CURLE_OK)
+		error_terminate("Failed to fetch pages", err_curl);
 }
 
 void
 extract_pages(void)
 {
-
 }
 
 void
@@ -108,15 +135,16 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
-	if (!strcmp("-u", argv[1])) {
+	if (!strcmp("-h", argv[1])) { /* Show usage help. */
+		tldr_usage();
+	} else if (!strcmp("-u", argv[1])) { /* Update pages. */
 		fetch_pages();
 		extract_pages();
 		index_pages();
-	} else if (!strcmp("-l", argv[1])) {
+	} else if (!strcmp("-l", argv[1])) { /* Print all pages names. */
 		list_pages();
 	} else {
-		display_page(find_page(""));
+		display_page(find_page("")); /* Display a given page. */
 	}
-
 	return 0;
 }
