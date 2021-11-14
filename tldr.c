@@ -47,6 +47,8 @@ static void  list_pages(void);
 static char *find_page(const char *page_name);
 /* Prints a given page. */
 static void  display_page(const char *page_path);
+/* Opens index file performing all the necessary checking. */
+static FILE *open_index(const char *mode);
 
 #include "config.h"
 
@@ -161,20 +163,11 @@ void
 index_pages(void)
 {
 	char buf[BUF_SIZE];
-	/* Construct the index path. */
-	strcpy(buf, getenv("HOME"));
-	strcat(buf, PAGES_PATH);
-	strcat(buf, "/index");
 
-	tldr_index = fopen(buf, "w");
-	if (!tldr_index)
-		error_terminate("Failed to open index", NULL);
-
-	/* Construct the pages path. */
 	strcpy(buf, getenv("HOME"));
 	strcat(buf, PAGES_PATH);
 	strcat(buf, PAGES_LANG);
-
+	tldr_index = open_index("w");
 	ftw(buf, ftw_callback, 10);
 	fclose(tldr_index);
 }
@@ -193,27 +186,58 @@ list_pages(void)
 {
 	char buf[BUF_SIZE];
 
-	strcpy(buf, getenv("HOME"));
-	strcat(buf, PAGES_PATH);
-	strcat(buf, "/index");
-
-	tldr_index = fopen(buf, "r");
-	if (!tldr_index)
-		error_terminate("Failed to open index file", NULL);
+	tldr_index = open_index("w");
 	while(fgets(buf, BUF_SIZE, tldr_index))
 		printf("%s", strchr(buf+1, '/')+1);
+	fclose(tldr_index);
 }
 
 char *
 find_page(const char *page_name)
 {
-	return "";
+	static char buf[BUF_SIZE];
+
+	tldr_index = open_index("r");
+	char page_filename[strlen(page_name)+5]; /* for '.md\n\0' */
+	strcpy(page_filename, page_name);
+	strcat(page_filename, ".md\n");
+	while(fgets(buf, BUF_SIZE, tldr_index)) {
+		/* page_name is either 'command' or 'platform/command'. */
+		if (strchr(page_name, '/')) { /* platform/command */
+			if(!strcmp(page_filename, buf))
+				return buf;
+		} else { /* command */
+			if (!strcmp(page_filename, strchr(buf, '/')+1))
+				return buf;
+		}
+	}
+	fclose(tldr_index);
+	return NULL;
 }
 
 void
-display_page(const char *page_path)
+display_page(const char *page_name)
 {
+	const char *page_path = find_page(page_name);
+	if (!page_path) {
+		puts("The page has not been found.");
+		exit(1);
+	}
+	printf("%s", page_path);
+}
 
+FILE *
+open_index(const char *mode)
+{
+	char buf[BUF_SIZE];
+	FILE *fp;
+	strcpy(buf, getenv("HOME"));
+	strcat(buf, PAGES_PATH);
+	strcat(buf, "/index");
+	fp = fopen(buf, mode);
+	if (!fp)
+		error_terminate("Failer to open index", mode);
+	return fp;
 }
 
 int
@@ -236,7 +260,7 @@ main(int argc, char *argv[])
 	} else if (!strcmp("-l", argv[1])) { /* Print all pages names. */
 		list_pages();
 	} else {
-		display_page(find_page("")); /* Display a given page. */
+		display_page(argv[1]); /* Display a given page. */
 	}
 	return 0;
 }
