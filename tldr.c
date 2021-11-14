@@ -227,8 +227,11 @@ main(int argc, char *argv[])
 	if (!strcmp("-h", argv[1])) { /* Show usage help. */
 		tldr_usage();
 	} else if (!strcmp("-u", argv[1])) { /* Update pages. */
+		puts("Fetching pages...");
 		fetch_pages();
+		puts("Extracting pages...");
 		extract_pages();
+		puts("Indexing pages...");
 		index_pages();
 	} else if (!strcmp("-l", argv[1])) { /* Print all pages names. */
 		list_pages();
