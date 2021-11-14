@@ -101,6 +101,52 @@ fetch_pages(void)
 void
 extract_pages(void)
 {
+	char page_path[MAX_PATH]; /* Path to save pages. */
+	char archive_path[MAX_PATH]; /* Path within archive to extract from. */
+	FILE *tldr_archive;
+	int ares; /* libarchive status. */
+	struct archive *ap;
+	struct archive_entry *aep;
+
+	tldr_archive = fopen(PAGES_TMP, "r");
+	if (tldr_archive == NULL)
+		error_terminate("Failed to open the archive", NULL);
+
+	ap = archive_read_new();
+	if (ap == NULL)
+		error_terminate("Failed to archive_read_new()", NULL);
+	archive_read_support_format_zip(ap);
+	ares = archive_read_open_FILE(ap, tldr_archive);
+	if (ares != ARCHIVE_OK)
+		error_terminate("Failed to archive_read_open_FILE()",
+		    archive_error_string(ap));
+
+	/* A place inside the archive to extract pages from. */
+	strcpy(archive_path, "tldr-master");
+	strcat(archive_path, PAGES_LANG);
+	strcat(archive_path, "/");
+
+	/* Find the folder within the archive to extract from. */
+	while (archive_read_next_header(ap, &aep) != ARCHIVE_EOF)
+		if (!strcmp(archive_entry_pathname(aep), archive_path))
+			break;
+	while (archive_read_next_header(ap, &aep) != ARCHIVE_EOF) {
+		if (strncmp(archive_entry_pathname(aep),
+		    archive_path, strlen(archive_path)))
+			break;
+
+		/* A place to put the extracted pages to. */
+		strcpy(page_path, getenv("HOME"));
+		strcat(page_path, PAGES_PATH);
+		strcat(page_path, strchr(archive_entry_pathname(aep),'/'));
+		archive_entry_set_pathname(aep, page_path);
+		ares = archive_read_extract(ap, aep, 0);
+		if (ares != ARCHIVE_OK)
+			error_terminate("Failed to archive_read_extract()",
+			    archive_error_string(ap));
+	}
+	archive_read_free(ap);
+	fclose(tldr_archive);
 }
 
 void
