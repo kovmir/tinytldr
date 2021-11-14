@@ -191,7 +191,17 @@ ftw_callback(const char *path, const struct stat *sb, int typeflag)
 void
 list_pages(void)
 {
+	char buf[BUF_SIZE];
 
+	strcpy(buf, getenv("HOME"));
+	strcat(buf, PAGES_PATH);
+	strcat(buf, "/index");
+
+	tldr_index = fopen(buf, "r");
+	if (!tldr_index)
+		error_terminate("Failed to open index file", NULL);
+	while(fgets(buf, BUF_SIZE, tldr_index))
+		printf("%s", strchr(buf+1, '/')+1);
 }
 
 char *
