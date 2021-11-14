@@ -16,7 +16,7 @@ PREFIX = /usr/local
 PROJECT = tldr
 
 all:
-	$(CC) $(CFLAGS) $(LDFLAGS) $(PROJECT).c -o $(PROJECT)
+	$(CC) $(CFLAGS) -O2 $(LDFLAGS) $(PROJECT).c -o $(PROJECT)
 
 debug:
 	$(CC) $(CFLAGS) $(LDFLAGS) -g $(PROJECT).c -o $(PROJECT)
