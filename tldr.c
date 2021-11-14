@@ -63,7 +63,7 @@ error_terminate(const char *msg, const char *details)
 inline void
 tldr_usage(void)
 {
-	printf("USAGE: tldr [options] <[platform,]command>\n\n"
+	printf("USAGE: tldr [options] <[platform/]command>\n\n"
 	    "[options]\n"
 	    "\t-h:\tthis help overview\n"
 	    "\t-l:\tshow all available pages\n"
@@ -76,7 +76,7 @@ tldr_usage(void)
 	    "\tosx\n"
 	    "\tsunos\n"
 	    "\twindows\n\n"
-	    "\t<command>\n"
+	    "<command>\n"
 	    "\tShow examples for this command\n");
 }
 
