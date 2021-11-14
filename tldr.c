@@ -70,7 +70,7 @@ tldr_usage(void)
 	    "[options]\n"
 	    "\t-h:\tthis help overview\n"
 	    "\t-l:\tshow all available pages\n"
-	    "\t-u:\tfetch lastest copies of cached pages\n\n"
+	    "\t-u:\tfetch lastest copies of man pages\n\n"
 	    "[platform]\n"
 	    "\tandroid\n"
 	    "\tcommon\n"
