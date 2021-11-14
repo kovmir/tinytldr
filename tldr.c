@@ -183,7 +183,7 @@ int
 ftw_callback(const char *path, const struct stat *sb, int typeflag)
 {
 	(void)sb; /* Suppress compiler warnings about unused *sb. */
-	if (strcmp(PAGES_LANG, strstr(path, PAGES_LANG))) /* Skip the directory itself. */
+	if (typeflag == FTW_F)
 		fprintf(tldr_index, "%s\n", strstr(path, PAGES_LANG));
 	return 0;
 }
