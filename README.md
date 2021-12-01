@@ -1,4 +1,4 @@
-# tldr
+# untldr
 Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
 # KILLER FEATURES
