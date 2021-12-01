@@ -1,4 +1,4 @@
-CC = cc
+CC ?= cc
 
 CFLAGS  = -std=c99
 CFLAGS += -pedantic
@@ -12,7 +12,7 @@ CFLAGS += -D_DEFAULT_SOURCE
 
 LDFLAGS = -lcurl -larchive
 
-PREFIX = /usr/local
+PREFIX ?= /usr/local
 PROJECT = tldr
 
 all:
