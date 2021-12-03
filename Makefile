@@ -16,10 +16,10 @@ PREFIX ?= /usr/local
 PROJECT = tldr
 
 all:
-	$(CC) $(CFLAGS) -O2 $(LDFLAGS) $(PROJECT).c -o $(PROJECT)
+	$(CC) $(CFLAGS) -O2 $(PROJECT).c -o $(PROJECT) $(LDFLAGS)
 
 debug:
-	$(CC) $(CFLAGS) $(LDFLAGS) -g $(PROJECT).c -o $(PROJECT)
+	$(CC) $(CFLAGS) -g $(PROJECT).c -o $(PROJECT) $(LDFLAGS)
 
 gdb: debug
 	gdb ./$(PROJECT)

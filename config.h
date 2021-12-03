@@ -3,28 +3,25 @@
 /* URL to download man pages. */
 static const char *PAGES_URL = "https://codeload.github.com/tldr-pages/tldr/zip/master";
 
-/* Path to temporary store the downloaded archive with pages. */
-static const char *PAGES_TMP = "/tmp/tldr_pages.zip";
-
 /* Path to store man pages relative to $HOME. */
 static const char *PAGES_PATH = "/.config/tldr";
 
 /* Pages language, uncomment ONE of the following. */
-static const char *PAGES_LANG = "/pages"; /* English */
-/* static const char *PAGES_LANG = "/pages.de"; */
-/* static const char *PAGES_LANG = "/pages.es"; */
-/* static const char *PAGES_LANG = "/pages.fr"; */
-/* static const char *PAGES_LANG = "/pages.hbs"; */
-/* static const char *PAGES_LANG = "/pages.it"; */
-/* static const char *PAGES_LANG = "/pages.ja"; */
-/* static const char *PAGES_LANG = "/pages.ko"; */
-/* static const char *PAGES_LANG = "/pages.pt_BR"; */
-/* static const char *PAGES_LANG = "/pages.pt_PT"; */
-/* static const char *PAGES_LANG = "/pages.ta"; */
-/* static const char *PAGES_LANG = "/pages.zh"; */
+static const char *PAGES_LANG = "/pages";              /*  English */
+/* static const char *PAGES_LANG = "/pages.de"; */     /*   German */
+/* static const char *PAGES_LANG = "/pages.es"; */     /*  Spanish */
+/* static const char *PAGES_LANG = "/pages.fr"; */     /*   French */
+/* static const char *PAGES_LANG = "/pages.hbs"; */    /* Serbo-Croatian */
+/* static const char *PAGES_LANG = "/pages.it"; */     /*  Italian */
+/* static const char *PAGES_LANG = "/pages.ja"; */     /* Japanese */
+/* static const char *PAGES_LANG = "/pages.ko"; */     /*   Korean */
+/* static const char *PAGES_LANG = "/pages.pt_BR"; */  /* Portuguese: BR */
+/* static const char *PAGES_LANG = "/pages.pt_PT"; */  /* Portuguese: PT */
+/* static const char *PAGES_LANG = "/pages.ta"; */     /*   Tamil  */ 
+/* static const char *PAGES_LANG = "/pages.zh"; */     /*  Chinese */
 
 /* Colors and styling. */
 static const char *HEADING_STYLE = "\033[31m";
-static const char *SUBHEADING_STYLE = "\033[4m";
+static const char *SUBHEADING_STYLE = "\033[22;4m";
 static const char *COMMAND_DESC_STYLE = "\033[22;32m";
 static const char *COMMAND_STYLE = "\033[1m";
