@@ -7,6 +7,9 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 * Under 300 lines.
 * Depends on nothing but libcurl and libarchive.
 
+# PREVIEW
+![untldr screenshot](https://raw.githubusercontent.com/unInstance/untldr/master/screenshot.png)
+
 # QUICK START
 Clone this repository and enter it:
 
