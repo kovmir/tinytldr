@@ -64,7 +64,7 @@ static const char *RESET_STYLING = "\033[0m\033[0K";
 /* Index file to hold available page names. */
 static FILE *tldr_index;
 /* Path to download the tldr archive to. */ 
-char zip_path[BUF_SIZE];
+static char zip_path[BUF_SIZE];
 
 inline void
 error_terminate(const char *msg, const char *details)
