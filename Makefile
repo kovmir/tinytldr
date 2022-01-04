@@ -8,8 +8,6 @@ CFLAGS += -Wcast-align
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wundef
 
-CFLAGS += -D_DEFAULT_SOURCE
-
 LDFLAGS = -lcurl -larchive
 
 PREFIX ?= /usr/local
