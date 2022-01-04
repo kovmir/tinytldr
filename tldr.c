@@ -15,12 +15,18 @@
  */
 
 /* Includes */
+/* cURL must be included before libarchive in order to avoid a compiler
+ * warning on Windows regarding the Winsock2 library. */
+#include <curl/curl.h>
 #include <archive.h>
 #include <archive_entry.h>
-#include <curl/curl.h>
 #include <dirent.h>
 #include <ftw.h>
-#include <linux/limits.h>
+/* Using <limits.h> rather than the Linux-specific version; in any case, 
+ * note that in Windows, Debian Buster, and FreeBSD 12, failing to 
+ * include <limits.h> had no effect, and it is not clear what is 
+ * supposed to be relying upon any of the constants defined therein.    */
+#include <limits.h>		 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +34,7 @@
 /* Constants and Macros */
 #define BUF_SIZE 1024
 #define D_NAME entry->d_name
+#define ENABLE_WIN_VT100_OUT 7
 
 /* Function prototypes */
 /* Print error message and terminate the execution */
@@ -45,16 +52,24 @@ static int   ftw_callback(const char *path, const struct stat *sb, int typeflag)
 static void  list_pages(void);
 /* Returns a file path to a given page. */
 static char *find_page(const char *page_name);
+/* Enables VT100 mode on Win10 1503+ ConHost & wt+mintty; else, empty. */
+static void  setup_console(void);
+/* Restores previous mode on Win10 1503+ ConHost & wt+mintty; else, empty. */
+static void  restore_console(void);
 /* Prints a given page. */
-static void  display_page(const char *page_path);
+static void  display_page(const char *dest_path);
 /* Opens index file performing all the necessary checking. */
 static FILE *open_index(const char *mode);
 
+/* Save locations, styling, and other settings are set via config.h. */
 #include "config.h"
-
-static const char *RESET_STYLING = "\033[0m";
+/* Resets console styling back to default (usually white-on-black),
+   and clears rest of current line for consistency on Windows. */
+static const char *RESET_STYLING = "\033[0m\033[0K";
 /* Index file to hold available page names. */
 static FILE *tldr_index;
+/* Path to download the tldr archive to. */ 
+char zip_path[BUF_SIZE];
 
 inline void
 error_terminate(const char *msg, const char *details)
@@ -90,8 +105,17 @@ fetch_pages(void)
 	CURLcode cres; /* cURL operation result. */
 	char err_curl[CURL_ERROR_SIZE]; /* Curl error message buffer. */
 	FILE *tldr_archive; /* File to download to. */
-
-	tldr_archive = fopen(PAGES_TMP, "w");
+	
+	if(getenv("TEMP") != NULL) /* Defined by Windows. */
+	  strcpy(zip_path, getenv("TEMP"));
+	else if (getenv("TEMPDIR") != NULL) /* Can be defined by *nix users. */
+	  strcpy(zip_path, getenv("TEMPDIR"));
+	else  /* If neither defined, presume default *nix tmp path. */
+	  strcpy(zip_path, "/tmp");
+	strcat(zip_path, "/tldr_pages.zip");
+	
+	/* Write in binary mode to avoid mangling with CRLFs in Windows. */
+	tldr_archive = fopen(zip_path, "wb");
 	if (!tldr_archive)
 		error_terminate("Failed to create a temporary file", NULL);
 
@@ -112,14 +136,13 @@ fetch_pages(void)
 void
 extract_pages(void)
 {
-	char page_path[BUF_SIZE]; /* Path to save pages. */
-	char archive_path[BUF_SIZE]; /* Path within archive to extract from. */
-	FILE *tldr_archive;
+	char src_path[BUF_SIZE]; /* Path within archive to extract from. */
+	char dest_path[BUF_SIZE]; /* Path to save pages to. */
+	FILE *tldr_archive; /* Pointer to downloaded zip file. */ 
 	int ares; /* libarchive status. */
 	struct archive *ap;
 	struct archive_entry *aep;
-
-	tldr_archive = fopen(PAGES_TMP, "r");
+	tldr_archive = fopen(zip_path, "r");
 	if (tldr_archive == NULL)
 		error_terminate("Failed to open the archive", NULL);
 
@@ -133,24 +156,24 @@ extract_pages(void)
 		    archive_error_string(ap));
 
 	/* A place inside the archive to extract pages from. */
-	strcpy(archive_path, "tldr-master");
-	strcat(archive_path, PAGES_LANG);
-	strcat(archive_path, "/");
+	strcpy(src_path, "tldr-master");
+	strcat(src_path, PAGES_LANG);
+	strcat(src_path, "/");
 
 	/* Find the folder within the archive to extract from. */
 	while (archive_read_next_header(ap, &aep) != ARCHIVE_EOF)
-		if (!strcmp(archive_entry_pathname(aep), archive_path))
+		if (!strcmp(archive_entry_pathname(aep), src_path))
 			break;
 	while (archive_read_next_header(ap, &aep) != ARCHIVE_EOF) {
 		if (strncmp(archive_entry_pathname(aep),
-		    archive_path, strlen(archive_path)))
+		    src_path, strlen(src_path)))
 			break;
 
 		/* A place to put the extracted pages to. */
-		strcpy(page_path, getenv("HOME"));
-		strcat(page_path, PAGES_PATH);
-		strcat(page_path, strchr(archive_entry_pathname(aep),'/'));
-		archive_entry_set_pathname(aep, page_path);
+		strcpy(dest_path, getenv("HOME"));
+		strcat(dest_path, PAGES_PATH);
+		strcat(dest_path, strchr(archive_entry_pathname(aep),'/'));
+		archive_entry_set_pathname(aep, dest_path);
 		ares = archive_read_extract(ap, aep, 0);
 		if (ares != ARCHIVE_OK)
 			error_terminate("Failed to archive_read_extract()",
@@ -158,6 +181,7 @@ extract_pages(void)
 	}
 	archive_read_free(ap);
 	fclose(tldr_archive);
+	remove(zip_path);
 }
 
 void
@@ -219,12 +243,34 @@ find_page(const char *page_name)
 	fclose(tldr_index);
 	return NULL;
 }
-
+#ifdef _WIN32
+static DWORD  outmode_init;  /* will be set to initial console mode value. */
+static HANDLE stdout_handle; /* handle for current console session. */ 
+/* ref: https://docs.microsoft.com/en-us/windows/console/setconsolemode */
+void 
+setup_console(void)
+{
+	stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	GetConsoleMode(stdout_handle, &outmode_init);
+	if (!SetConsoleMode(stdout_handle, ENABLE_WIN_VT100_OUT)){
+		error_terminate("\nYou are likely using an older version of Windows,"
+		"\nwhich is not yet compatible with this client.\n", NULL);	
+	}
+}
+void
+restore_console(void)
+{	/* Error catching would be superfluous here given program flow. */ 
+	SetConsoleMode(stdout_handle, outmode_init);
+}
+#else
+void setup_console(void){}
+void restore_console(void){}
+#endif
 void
 display_page(const char *page_name)
 {
-	const char *page_path = find_page(page_name);
-	if (!page_path) {
+	const char *dest_path = find_page(page_name);
+	if (!dest_path) {
 		puts("The page has not been found.");
 		exit(1);
 	}
@@ -235,9 +281,10 @@ display_page(const char *page_name)
 	strcat(buf, PAGES_PATH);
 	strcat(buf, PAGES_LANG);
 	strcat(buf, "/");
-	strcat(buf, page_path);
+	strcat(buf, dest_path);
 
 	page = fopen(buf, "r");
+	setup_console(); /* Enables VT100 processing in Win10 1503+ */ 
 	while (fgets(buf, BUF_SIZE, page)) {
 		if (!strcmp(buf, "\n")) {
 			/* Skip empty lines. */
@@ -258,6 +305,8 @@ display_page(const char *page_name)
 
 	}
 	fclose(page);
+	restore_console(); /* Restores previous console mode in Win10 1503+ */
+
 }
 
 FILE *
@@ -270,8 +319,8 @@ open_index(const char *mode)
 	strcat(buf, "/index");
 	fp = fopen(buf, mode);
 	if (!fp)
-		error_terminate("Failer to open index, "
-		    "probably you should run 'tldr -u'", mode);
+		error_terminate("Failed to open index; "
+		    "you should probably run 'tldr -u'", mode);
 	return fp;
 }
 
