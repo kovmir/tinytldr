@@ -4,7 +4,8 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 # KILLER FEATURES
 * It builds.
 * And then works.
-* Under 300 lines.
+* Small.
+* Cross platform, tested on Linux, Windows, and FreeBSD.
 * Depends on nothing but libcurl and libarchive.
 
 # PREVIEW
@@ -18,7 +19,7 @@ git clone https://github.com/unInstance/tldr
 cd tldr
 ```
 
-Compile and install tldr:
+Compile and install untldr:
 
 ```
 make
@@ -50,6 +51,9 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+# CREDITS
+Thanks [@bilditup1](https://github.com/bilditup1) for Windows support.
 
 # CONTRIBUTING
 Contributions are welcome.
