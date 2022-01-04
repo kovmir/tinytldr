@@ -22,11 +22,6 @@
 #include <archive_entry.h>
 #include <dirent.h>
 #include <ftw.h>
-/* Using <limits.h> rather than the Linux-specific version; in any case, 
- * note that in Windows, Debian Buster, and FreeBSD 12, failing to 
- * include <limits.h> had no effect, and it is not clear what is 
- * supposed to be relying upon any of the constants defined therein.    */
-#include <limits.h>		 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
