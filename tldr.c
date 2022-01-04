@@ -1,12 +1,12 @@
 /*
  * Copyright 2021 Ivan Kovmir
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,7 @@ static FILE *open_index(const char *mode);
 static const char *RESET_STYLING = "\033[0m\033[0K";
 /* Index file to hold available page names. */
 static FILE *tldr_index;
-/* Path to download the tldr archive to. */ 
+/* Path to download the tldr archive to. */
 static char zip_path[BUF_SIZE];
 
 inline void
@@ -133,7 +133,7 @@ extract_pages(void)
 {
 	char src_path[BUF_SIZE]; /* Path within archive to extract from. */
 	char dest_path[BUF_SIZE]; /* Path to save pages to. */
-	FILE *tldr_archive; /* Pointer to downloaded zip file. */ 
+	FILE *tldr_archive; /* Pointer to downloaded zip file. */
 	int ares; /* libarchive status. */
 	struct archive *ap;
 	struct archive_entry *aep;
@@ -240,21 +240,21 @@ find_page(const char *page_name)
 }
 #ifdef _WIN32
 static DWORD  outmode_init;  /* will be set to initial console mode value. */
-static HANDLE stdout_handle; /* handle for current console session. */ 
+static HANDLE stdout_handle; /* handle for current console session. */
 /* ref: https://docs.microsoft.com/en-us/windows/console/setconsolemode */
-void 
+void
 setup_console(void)
 {
 	stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	GetConsoleMode(stdout_handle, &outmode_init);
 	if (!SetConsoleMode(stdout_handle, ENABLE_WIN_VT100_OUT)){
 		error_terminate("\nYou are likely using an older version of Windows,"
-		"\nwhich is not yet compatible with this client.\n", NULL);	
+		"\nwhich is not yet compatible with this client.\n", NULL);
 	}
 }
 void
 restore_console(void)
-{	/* Error catching would be superfluous here given program flow. */ 
+{	/* Error catching would be superfluous here given program flow. */
 	SetConsoleMode(stdout_handle, outmode_init);
 }
 #else
@@ -279,7 +279,7 @@ display_page(const char *page_name)
 	strcat(buf, dest_path);
 
 	page = fopen(buf, "r");
-	setup_console(); /* Enables VT100 processing in Win10 1503+ */ 
+	setup_console(); /* Enables VT100 processing in Win10 1503+ */
 	while (fgets(buf, BUF_SIZE, page)) {
 		if (!strcmp(buf, "\n")) {
 			/* Skip empty lines. */
