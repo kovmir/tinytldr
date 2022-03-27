@@ -12,6 +12,13 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 ![untldr screenshot](https://raw.githubusercontent.com/unInstance/untldr/master/screenshot.png)
 
 # QUICK START
+
+## Install package
+
+* [ArchLinux AUR](https://aur.archlinux.org/packages/untldr)
+
+## Install from source
+
 Clone this repository and enter it:
 
 ```
