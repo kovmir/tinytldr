@@ -22,8 +22,8 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 Clone this repository and enter it:
 
 ```
-git clone https://github.com/unInstance/tldr
-cd tldr
+git clone https://github.com/unInstance/untldr
+cd untldr
 ```
 
 Compile and install untldr:
