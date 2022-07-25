@@ -102,11 +102,11 @@ fetch_pages(void)
 	FILE *tldr_archive; /* File to download to. */
 	
 	if(getenv("TEMP") != NULL) /* Defined by Windows. */
-	  strcpy(zip_path, getenv("TEMP"));
+		strcpy(zip_path, getenv("TEMP"));
 	else if (getenv("TEMPDIR") != NULL) /* Can be defined by *nix users. */
-	  strcpy(zip_path, getenv("TEMPDIR"));
+		strcpy(zip_path, getenv("TEMPDIR"));
 	else  /* If neither defined, presume default *nix tmp path. */
-	  strcpy(zip_path, "/tmp");
+		strcpy(zip_path, "/tmp");
 	strcat(zip_path, "/tldr_pages.zip");
 	
 	/* Write in binary mode to avoid mangling with CRLFs in Windows. */
