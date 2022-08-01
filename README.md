@@ -16,6 +16,7 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 ## Install package
 
 * [ArchLinux AUR](https://aur.archlinux.org/packages/untldr)
+* [Slackware](https://slackbuilds.org/repository/15.0/misc/untldr/?search=untldr)
 
 ## Install from source
 
