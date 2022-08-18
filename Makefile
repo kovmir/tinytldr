@@ -1,6 +1,6 @@
 CC ?= cc
 
-CFLAGS  = -std=c99
+CFLAGS += -std=c99
 CFLAGS += -pedantic
 CFLAGS += -Wall
 CFLAGS += -Wextra
@@ -8,16 +8,18 @@ CFLAGS += -Wcast-align
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wundef
 
-LDFLAGS = -lcurl -larchive
+LIBS = -lcurl -larchive
+
+LDFLAGS += $(LIBS)
 
 PREFIX ?= /usr/local
 PROJECT = tldr
 
 all:
-	$(CC) $(CFLAGS) -O2 $(PROJECT).c -o $(PROJECT) $(LDFLAGS)
+	$(CC) $(CFLAGS) -O3 $(LDFLAGS) $(PROJECT).c -o $(PROJECT)
 
 debug:
-	$(CC) $(CFLAGS) -g $(PROJECT).c -o $(PROJECT) $(LDFLAGS)
+	$(CC) $(CFLAGS) -g $(LDFLAGS) $(PROJECT).c -o $(PROJECT)
 
 gdb: debug
 	gdb ./$(PROJECT)
@@ -40,5 +42,6 @@ install:
 
 uninstall:
 	rm $(DESTDIR)$(PREFIX)/bin/$(PROJECT)
+	rmdir $(DESTDIR)$(PREFIX)/bin
 
 .PHONY: all debug gdb memcheck memcheck_v memcheck_full clean install uninstall
