@@ -40,7 +40,7 @@ clean:
 
 install:
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
-	$(INSTALL) $(PROJECT) "$(DESTDIR)$(PREFIX)/bin/$(PROJECT)"
+	$(INSTALL) ./$(PROJECT) "$(DESTDIR)$(PREFIX)/bin/$(PROJECT)"
 
 uninstall:
 	rm -f "$(DESTDIR)$(PREFIX)/bin/$(PROJECT)"
