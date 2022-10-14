@@ -18,10 +18,10 @@ PROJECT = tldr
 INSTALL ?= install
 
 all:
-	$(CC) $(CFLAGS) -O3 $(LDFLAGS) $(PROJECT).c -o $(PROJECT)
+	$(CC) $(CFLAGS) -O3 $(PROJECT).c $(LDFLAGS) -o $(PROJECT)
 
 debug:
-	$(CC) $(CFLAGS) -g $(LDFLAGS) $(PROJECT).c -o $(PROJECT)
+	$(CC) $(CFLAGS) -g $(PROJECT).c $(LDFLAGS) -o $(PROJECT)
 
 gdb: debug
 	gdb ./$(PROJECT)
