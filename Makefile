@@ -15,6 +15,8 @@ LDFLAGS += $(LIBS)
 PREFIX ?= /usr/local
 PROJECT = tldr
 
+INSTALL ?= install
+
 all:
 	$(CC) $(CFLAGS) -O3 $(LDFLAGS) $(PROJECT).c -o $(PROJECT)
 
@@ -34,14 +36,14 @@ memcheck_full: debug
 	valgrind --leak-check=full --show-leak-kinds=all ./$(PROJECT)
 
 clean:
-	rm $(PROJECT)
+	rm -f ./$(PROJECT)
 
 install:
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	install $(PROJECT) $(DESTDIR)$(PREFIX)/bin/$(PROJECT)
+	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
+	$(INSTALL) $(PROJECT) "$(DESTDIR)$(PREFIX)/bin/$(PROJECT)"
 
 uninstall:
-	rm $(DESTDIR)$(PREFIX)/bin/$(PROJECT)
-	rmdir $(DESTDIR)$(PREFIX)/bin
+	rm -f "$(DESTDIR)$(PREFIX)/bin/$(PROJECT)"
+	rmdir --ignore-fail-on-non-empty "$(DESTDIR)$(PREFIX)/bin"
 
 .PHONY: all debug gdb memcheck memcheck_v memcheck_full clean install uninstall
