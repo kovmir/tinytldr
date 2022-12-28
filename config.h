@@ -1,7 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 
 /* URL to download man pages. */
-static const char *PAGES_URL = "https://codeload.github.com/tldr-pages/tldr/zip/master";
+static const char *PAGES_URL = "https://codeload.github.com/tldr-pages/tldr/zip/main";
 
 /* Path to store man pages relative to $HOME. */
 static const char *PAGES_PATH = "/.config/tldr";
