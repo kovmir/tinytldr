@@ -1,4 +1,4 @@
-# untldr
+# tinytldr
 
 Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
@@ -12,7 +12,7 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
 # PREVIEW
 
-![untldr screenshot](https://raw.githubusercontent.com/unInstance/untldr/master/screenshot.png)
+![screenshot](https://raw.githubusercontent.com/kovmir/tinytldr/master/screenshot.png)
 
 # QUICK START
 
@@ -26,18 +26,19 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 Clone this repository and enter it:
 
 ```
-git clone https://github.com/unInstance/untldr
-cd untldr
+git clone https://github.com/kovmir/tinytldr
+cd tinytldr
 ```
 
-Compile and install untldr:
+Compile and install:
 
 ```
 make
 sudo make install
 ```
 
-Run
+Run:
+
 ```
 tldr -u
 ```
