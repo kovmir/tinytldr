@@ -46,7 +46,7 @@ tldr windows/scoop # Or one could specify a platform.
 ```
 
 # LICENSE
-Copyright 2022 Ivan Kovmir
+Copyright 2023 Ivan Kovmir
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
