@@ -18,6 +18,7 @@
 /* cURL must be included before libarchive in order to avoid a compiler
  * warning on Windows regarding the Winsock2 library. */
 #include <curl/curl.h>
+
 #include <archive.h>
 #include <archive_entry.h>
 #include <dirent.h>
