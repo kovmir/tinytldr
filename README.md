@@ -1,7 +1,9 @@
 # untldr
+
 Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
 # KILLER FEATURES
+
 * It builds.
 * And then works.
 * Small.
@@ -9,6 +11,7 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 * Depends on nothing but libcurl and libarchive.
 
 # PREVIEW
+
 ![untldr screenshot](https://raw.githubusercontent.com/unInstance/untldr/master/screenshot.png)
 
 # QUICK START
@@ -46,6 +49,7 @@ tldr windows/scoop # Or one could specify a platform.
 ```
 
 # LICENSE
+
 Copyright 2023 Ivan Kovmir
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,9 +65,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 # CREDITS
+
 Thanks [@bilditup1](https://github.com/bilditup1) for Windows support.
 
 # CONTRIBUTING
+
 Contributions are welcome.
 
 When submitting PRs, please maintain the [coding style](https://suckless.org/coding_style/)
