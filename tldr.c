@@ -152,7 +152,7 @@ extract_pages(void)
 		    archive_error_string(ap));
 
 	/* A place inside the archive to extract pages from. */
-	strcpy(src_path, "tldr-master");
+	strcpy(src_path, "tldr-main");
 	strcat(src_path, PAGES_LANG);
 	strcat(src_path, "/");
 
