@@ -16,6 +16,7 @@ PREFIX ?= /usr/local
 PROJECT = tldr
 
 INSTALL ?= install
+STRIP ?= strip
 
 all:
 	$(CC) $(CFLAGS) -O3 $(PROJECT).c $(LDFLAGS) -o $(PROJECT)
@@ -38,6 +39,9 @@ memcheck_full: debug
 clean:
 	rm -f ./$(PROJECT)
 
+strip:
+	$(STRIP) ./$(PROJECT)
+
 install:
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
 	$(INSTALL) ./$(PROJECT) "$(DESTDIR)$(PREFIX)/bin/$(PROJECT)"
@@ -46,4 +50,4 @@ uninstall:
 	rm -f "$(DESTDIR)$(PREFIX)/bin/$(PROJECT)"
 	rmdir --ignore-fail-on-non-empty "$(DESTDIR)$(PREFIX)/bin"
 
-.PHONY: all debug gdb memcheck memcheck_v memcheck_full clean install uninstall
+.PHONY: all debug gdb memcheck memcheck_v memcheck_full clean strip install uninstall
