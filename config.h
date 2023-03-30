@@ -4,7 +4,7 @@
 static const char *PAGES_URL = "https://codeload.github.com/tldr-pages/tldr/zip/main";
 
 /* Path to store man pages relative to $HOME. */
-static const char *PAGES_PATH = "/.config/tldr";
+static const char *PAGES_PATH = "/.local/share/tinytldr";
 
 /* Pages language, uncomment ONE of the following. */
 static const char *PAGES_LANG = "/pages";              /*  English */
