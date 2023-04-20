@@ -1,0 +1,21 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: sudo apt-get install -y build-essential libcurl4-openssl-dev libarchive-dev
+
+    - name: Build project
+      run: make
+
+    - name: Test project
+      run: |
+        ./tldr -u
+        ./tldr cd
+        ./tldr windows/scoop
