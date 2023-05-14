@@ -12,7 +12,7 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
 # PREVIEW
 
-![screenshot](https://raw.githubusercontent.com/kovmir/tinytldr/master/screenshot.png)
+![screenshot](screenshot.png)
 
 # QUICK START
 
