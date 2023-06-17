@@ -1,5 +1,11 @@
 CC ?= cc
 
+LIBNOTIFY_LIBS = `pkg-config --libs libarchive libcurl`
+LIBNOTIFY_INCS = `pkg-config --cflags libarchive libcurl`
+
+LIBS += $(LIBNOTIFY_LIBS)
+INCS += $(LIBNOTIFY_INCS)
+
 CFLAGS += -std=c99
 CFLAGS += -pedantic
 CFLAGS += -Wall
@@ -7,8 +13,7 @@ CFLAGS += -Wextra
 CFLAGS += -Wcast-align
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wundef
-
-LIBS = -lcurl -larchive
+CFLAGS += $(INCS)
 
 LDFLAGS += $(LIBS)
 
