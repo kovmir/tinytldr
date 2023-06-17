@@ -49,6 +49,12 @@ tldr cd
 tldr windows/scoop # Or one could specify a platform.
 ```
 
+# DEPENDENCIES
+
+* [libarchive](https://www.libarchive.org/)
+* [libcurl](https://curl.se/libcurl/)
+* [pkg-config](https://gitlab.freedesktop.org/pkg-config/pkg-config)
+
 # LICENSE
 
 Copyright 2023 Ivan Kovmir
