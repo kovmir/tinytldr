@@ -71,7 +71,5 @@ Thanks [@bilditup1](https://github.com/bilditup1) for Windows support.
 
 # CONTRIBUTING
 
-Contributions are welcome.
-
-When submitting PRs, please maintain the [coding style](https://suckless.org/coding_style/)
-used for the project.
+When submitting PRs, please maintain the [coding
+style](https://suckless.org/coding_style/) used for the project.
