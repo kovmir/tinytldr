@@ -24,26 +24,27 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
 Clone this repository and enter it:
 
-```
+```bash
 git clone https://github.com/kovmir/tinytldr
 cd tinytldr
 ```
 
 Compile and install:
 
-```
+```bash
 make
 sudo make install
 ```
 
 Run:
 
-```
+```bash
 tldr -u
 ```
 
 To view a page
-```
+
+```bash
 tldr cd
 tldr windows/scoop # Or one could specify a platform.
 ```
