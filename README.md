@@ -14,38 +14,26 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
 ![screenshot](screenshot.png)
 
-# QUICK START
+# INSTALL
 
-## Install package
+## Package
 
 * [Slackware](https://slackbuilds.org/repository/15.0/misc/tinytldr/?search=tinytldr)
 
-## Install from source
-
-Clone this repository and enter it:
+## Compile from source
 
 ```bash
 git clone https://github.com/kovmir/tinytldr
 cd tinytldr
-```
-
-Compile and install:
-
-```bash
 make
 sudo make install
 ```
 
-Run:
+# USAGE
 
 ```bash
-tldr -u
-```
-
-To view a page
-
-```bash
-tldr cd
+tldr -u # Fetch or update pages.
+tldr cd # View 'cd' page.
 tldr windows/scoop # Or one could specify a platform.
 ```
 
@@ -53,7 +41,9 @@ tldr windows/scoop # Or one could specify a platform.
 
 * [libarchive](https://www.libarchive.org/)
 * [libcurl](https://curl.se/libcurl/)
-* [pkg-config](https://gitlab.freedesktop.org/pkg-config/pkg-config)
+* ^[pkg-config](https://gitlab.freedesktop.org/pkg-config/pkg-config)
+
+*^: compilation time dependencies.*
 
 # CREDITS
 
