@@ -14,6 +14,8 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
 ![screenshot](screenshot.png)
 
+*[srcery](https://srcery.sh/) - terminal colorscheme on the screenshot.*
+
 # INSTALL
 
 ## Package
@@ -25,6 +27,7 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 ```bash
 git clone https://github.com/kovmir/tinytldr
 cd tinytldr
+# Optional: Adjust ./config.h to your linking.
 make
 sudo make install
 ```
