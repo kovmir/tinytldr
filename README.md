@@ -47,7 +47,8 @@ tldr windows/scoop # Or one could specify a platform.
 * [libarchive](https://www.libarchive.org/)
 * [libcurl](https://curl.se/libcurl/)
 * ^[pkg-config](https://gitlab.freedesktop.org/pkg-config/pkg-config)
-* ^[GNU Make](https://www.gnu.org/software/make/) or any BSD Make.
+* ^make
+* ^C99 compiler
 
 *^: compilation time dependencies.*
 
