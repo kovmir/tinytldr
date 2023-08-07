@@ -24,6 +24,8 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
 ## Compile from source
 
+See [dependencies](#dependencies).
+
 ```bash
 git clone https://github.com/kovmir/tinytldr
 cd tinytldr
@@ -45,6 +47,7 @@ tldr windows/scoop # Or one could specify a platform.
 * [libarchive](https://www.libarchive.org/)
 * [libcurl](https://curl.se/libcurl/)
 * ^[pkg-config](https://gitlab.freedesktop.org/pkg-config/pkg-config)
+* ^[GNU Make](https://www.gnu.org/software/make/) or any BSD Make.
 
 *^: compilation time dependencies.*
 
