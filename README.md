@@ -24,7 +24,7 @@ Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
 
 ## Compile from source
 
-See [dependencies](#dependencies).
+Satisfy [dependencies](#dependencies) first, and then:
 
 ```bash
 git clone https://github.com/kovmir/tinytldr
