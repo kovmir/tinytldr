@@ -1,30 +1,22 @@
 # tinytldr
 
-Minimalist [tldr](https://tldr.sh/) command line client, written in plain C99.
-
-# KILLER FEATURES
-
-* It builds.
-* And then works.
-* Small.
-* Cross platform, tested on Linux, Windows, and FreeBSD.
-* Depends on nothing but libcurl and libarchive.
+Minimalist [tldr][1] command line client, written in plain C99.
 
 # PREVIEW
 
 ![screenshot](screenshot.png)
 
-*[srcery](https://srcery.sh/) - terminal colorscheme on the screenshot.*
+*[srcery][2] - terminal colorscheme on the screenshot.*
 
 # INSTALL
 
 ## Package
 
-* [Slackware](https://slackbuilds.org/repository/15.0/misc/tinytldr/?search=tinytldr)
+* [Slackware][3]
 
 ## Compile from source
 
-Satisfy [dependencies](#dependencies) first, and then:
+Satisfy the [dependencies](#dependencies) first, and then:
 
 ```bash
 git clone https://github.com/kovmir/tinytldr
@@ -44,11 +36,25 @@ tldr windows/scoop # Or one could specify a platform.
 
 # DEPENDENCIES
 
-* [libarchive](https://www.libarchive.org/)
-* [libcurl](https://curl.se/libcurl/)
-* ^[pkg-config](https://gitlab.freedesktop.org/pkg-config/pkg-config)
+* ^[GNU Make][4]
+* ^[pkg-config][5]
+* ^[GCC][6] or [Clang][7]
+* [libarchive][8]
+* [libcurl][9]
 
-*^: compilation time dependencies.*
+*^: compilation time only dependencies.*
+
+# SUPPORTED OPERATING SYSTEMS
+
+* Linux
+* BSD
+* M$ Windows
+
+# FAQ
+
+**Q: Can I use it to display my personal pages?**
+
+A: You can, see [this issue][10].
 
 # CREDITS
 
@@ -56,5 +62,17 @@ Thanks [@bilditup1](https://github.com/bilditup1) for Windows support.
 
 # CONTRIBUTING
 
-When submitting PRs, please maintain the [coding
-style](https://suckless.org/coding_style/) used for the project.
+When submitting PRs, please maintain the [coding style][11] used for the
+project.
+
+[1]: https://tldr.sh/
+[2]: https://srcery.sh/
+[3]: https://slackbuilds.org/repository/15.0/misc/tinytldr/?search=tinytldr
+[4]: https://www.gnu.org/software/make/
+[5]: https://gitlab.freedesktop.org/pkg-config/pkg-config
+[6]: https://gcc.gnu.org/
+[7]: https://clang.llvm.org/
+[8]: https://www.libarchive.org/
+[9]: https://curl.se/libcurl/
+[10]: https://github.com/kovmir/tinytldr/issues/6#issuecomment-1884332215
+[11]: https://suckless.org/coding_style/
