@@ -6,13 +6,14 @@
  * warning on Windows regarding the Winsock2 library. */
 #include <curl/curl.h>
 
-#include <archive.h>
-#include <archive_entry.h>
 #include <dirent.h>
 #include <ftw.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+/* libarchive */
+#include <archive.h>
+#include <archive_entry.h>
 
 /* Constants and Macros */
 #define BUF_SIZE 1024
@@ -89,7 +90,7 @@ fetch_pages(void)
 	char err_curl[CURL_ERROR_SIZE]; /* Curl error message buffer. */
 	FILE *tldr_archive; /* File to download to. */
 	
-	if(getenv("TEMP") != NULL) /* Defined by Windows. */
+	if (getenv("TEMP") != NULL) /* Defined by Windows. */
 		strcpy(zip_path, getenv("TEMP"));
 	else if (getenv("TEMPDIR") != NULL) /* Can be defined by *nix users. */
 		strcpy(zip_path, getenv("TEMPDIR"));
