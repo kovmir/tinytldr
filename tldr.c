@@ -20,6 +20,7 @@
 #define BUF_SIZE 1024
 #define D_NAME entry->d_name
 #define ENABLE_WIN_VT100_OUT 7
+#define NULL_TERMINATE(arr, size) (arr[(size)-1] = 0)
 
 /* Function prototypes */
 /* Print error message and terminate the execution */
@@ -32,7 +33,8 @@ static void  fetch_pages(void);
 static void  extract_pages(void);
 /* Creates index file of all pages. */
 static void  index_pages(void);
-static int   ftw_callback(const char *path, const struct stat *sb, int typeflag);
+static int   nftw_callback(const char *path, const struct stat *sb,
+				int typeflag, struct FTW *ftwbuf);
 /* Prints all page names. */
 static void  list_pages(void);
 /* Returns a file path to a given page. */
@@ -98,6 +100,7 @@ fetch_pages(void)
 	else  /* If neither defined, presume default *nix tmp path. */
 		strcpy(zip_path, "/tmp");
 	strcat(zip_path, "/tldr_pages.zip");
+	NULL_TERMINATE(zip_path, BUF_SIZE);
 	
 	/* Write in binary mode to avoid mangling with CRLFs in Windows. */
 	tldr_archive = fopen(zip_path, "wb");
@@ -111,6 +114,7 @@ fetch_pages(void)
 	curl_easy_setopt(ceh, CURLOPT_ERRORBUFFER, err_curl);
 
 	cres = curl_easy_perform(ceh);
+
 	curl_easy_cleanup(ceh);
 	curl_global_cleanup();
 	fclose(tldr_archive);
@@ -127,6 +131,7 @@ extract_pages(void)
 	int ares; /* libarchive status. */
 	struct archive *ap;
 	struct archive_entry *aep;
+
 	tldr_archive = fopen(zip_path, "r");
 	if (tldr_archive == NULL)
 		error_terminate("Failed to open the archive", NULL);
@@ -141,9 +146,7 @@ extract_pages(void)
 		    archive_error_string(ap));
 
 	/* A place inside the archive to extract pages from. */
-	strcpy(src_path, "tldr-main");
-	strcat(src_path, PAGES_LANG);
-	strcat(src_path, "/");
+	snprintf(src_path, BUF_SIZE, "%s%s/", "tldr-main", PAGES_LANG);
 
 	/* Find the folder within the archive to extract from. */
 	while (archive_read_next_header(ap, &aep) != ARCHIVE_EOF)
@@ -151,13 +154,13 @@ extract_pages(void)
 			break;
 	while (archive_read_next_header(ap, &aep) != ARCHIVE_EOF) {
 		if (strncmp(archive_entry_pathname(aep),
-		    src_path, strlen(src_path)))
+				    src_path, strlen(src_path)))
 			break;
 
-		/* A place to put the extracted pages to. */
-		strcpy(dest_path, getenv("HOME"));
-		strcat(dest_path, PAGES_PATH);
-		strcat(dest_path, strchr(archive_entry_pathname(aep),'/'));
+		snprintf(dest_path, BUF_SIZE, "%s%s%s",
+				getenv("HOME"), PAGES_PATH,
+				strchr(archive_entry_pathname(aep),'/'));
+
 		archive_entry_set_pathname(aep, dest_path);
 		ares = archive_read_extract(ap, aep, 0);
 		if (ares != ARCHIVE_OK)
@@ -174,20 +177,27 @@ index_pages(void)
 {
 	char buf[BUF_SIZE];
 
-	strcpy(buf, getenv("HOME"));
-	strcat(buf, PAGES_PATH);
-	strcat(buf, PAGES_LANG);
+	snprintf(buf, BUF_SIZE, "%s%s%s",
+		getenv("HOME"), PAGES_PATH, PAGES_LANG);
+
 	tldr_index = open_index("w");
-	ftw(buf, ftw_callback, 10);
+	nftw(buf, nftw_callback, 10, FTW_PHYS);
 	fclose(tldr_index);
 }
 
 int
-ftw_callback(const char *path, const struct stat *sb, int typeflag)
+nftw_callback(const char *path, const struct stat *sb,
+			int typeflag, struct FTW *ftwbuf)
 {
-	(void)sb; /* Suppress compiler warnings about unused *sb. */
-	if (typeflag == FTW_F)
-		fprintf(tldr_index, "%s\n", strchr(strstr(path, PAGES_LANG)+1, '/')+1);
+	(void)sb; /* Suppress compiler warnings about unused arguments. */
+	(void)ftwbuf;
+
+	if (typeflag != FTW_F) /* Skip everything except files. */
+		return 0;
+
+	/* Truncate the full path to include only the filename and last dir. */
+	fprintf(tldr_index, "%s\n",
+			strchr(strstr(path, PAGES_LANG)+1, '/')+1);
 	return 0;
 }
 
@@ -195,8 +205,10 @@ void
 list_pages(void)
 {
 	char buf[BUF_SIZE];
+
 	tldr_index = open_index("r");
 	while(fgets(buf, BUF_SIZE, tldr_index)) {
+		NULL_TERMINATE(buf, BUF_SIZE);
 		printf("%s", buf);
 	}
 	fclose(tldr_index);
@@ -206,21 +218,22 @@ char *
 find_page(const char *page_name)
 {
 	static char buf[BUF_SIZE];
+	char page_filename[strlen(page_name)+5]; /* for '.md\n\0' */
 
 	tldr_index = open_index("r");
-	char page_filename[strlen(page_name)+5]; /* for '.md\n\0' */
-	strcpy(page_filename, page_name);
-	strcat(page_filename, ".md\n");
+	snprintf(page_filename, BUF_SIZE, "%s.md\n", page_name);
 	while(fgets(buf, BUF_SIZE, tldr_index)) {
 		/* page_name is either 'command' or 'platform/command'. */
 		if (strchr(page_name, '/')) { /* platform/command */
 			if(!strcmp(page_filename, buf)) {
 				*strchr(buf, '\n') = '\0';
+				fclose(tldr_index);
 				return buf;
 			}
 		} else { /* command */
 			if (!strcmp(page_filename, strchr(buf, '/')+1)) {
 				*strchr(buf, '\n') = '\0';
+				fclose(tldr_index);
 				return buf;
 			}
 		}
@@ -254,26 +267,23 @@ void restore_console(void){}
 void
 display_page(const char *page_name)
 {
-	const char *dest_path = find_page(page_name);
-	if (!dest_path) {
-		puts("The page has not been found.");
-		exit(1);
-	}
-
 	char buf[BUF_SIZE];
+	char *dest_path;
 	FILE *page;
-	strcpy(buf, getenv("HOME"));
-	strcat(buf, PAGES_PATH);
-	strcat(buf, PAGES_LANG);
-	strcat(buf, "/");
-	strcat(buf, dest_path);
+
+	dest_path = find_page(page_name);
+	if (!dest_path)
+		error_terminate("The page has not been found.", NULL);
+
+	snprintf(buf, BUF_SIZE, "%s%s%s/%s",
+			getenv("HOME"), PAGES_PATH, PAGES_LANG, dest_path);
 
 	page = fopen(buf, "r");
 	setup_console(); /* Enables VT100 processing in Win10 1503+ */
 	while (fgets(buf, BUF_SIZE, page)) {
+		NULL_TERMINATE(buf, BUF_SIZE);
 		if (!strcmp(buf, "\n")) {
-			/* Skip empty lines. */
-			continue;
+			continue; /* Skip empty lines. */
 		}
 		if (buf[0] == '#') {
 			printf("%s%s%s", HEADING_STYLE, buf, RESET_STYLING);
@@ -291,7 +301,6 @@ display_page(const char *page_name)
 	}
 	fclose(page);
 	restore_console(); /* Restores previous console mode in Win10 1503+ */
-
 }
 
 FILE *
@@ -299,9 +308,9 @@ open_index(const char *mode)
 {
 	char buf[BUF_SIZE];
 	FILE *fp;
-	strcpy(buf, getenv("HOME"));
-	strcat(buf, PAGES_PATH);
-	strcat(buf, "/index");
+
+	snprintf(buf, BUF_SIZE, "%s%s/%s",
+			getenv("HOME"), PAGES_PATH, "index");
 	fp = fopen(buf, mode);
 	if (!fp)
 		error_terminate("Failed to open index; "
@@ -312,7 +321,6 @@ open_index(const char *mode)
 int
 main(int argc, char *argv[])
 {
-
 	int opt;
 
 	while ((opt = getopt(argc, argv, "luh")) != -1) {
@@ -321,8 +329,11 @@ main(int argc, char *argv[])
 			list_pages();
 			return 0;
 		case 'u':
+			puts("Fetching pages...");
 			fetch_pages();
+			puts("Extracting pages...");
 			extract_pages();
+			puts("Indexing pages...");
 			index_pages();
 			return 0;
 		case 'h':

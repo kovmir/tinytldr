@@ -13,8 +13,11 @@ CFLAGS += -Wextra
 CFLAGS += -Wcast-align
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wundef
-CFLAGS += $(INCS)
+CFLAGS += -Wno-format-truncation
 
+CFLAGS += -D_XOPEN_SOURCE=500
+
+CFLAGS += $(INCS)
 LDFLAGS += $(LIBS)
 
 PREFIX ?= /usr/local
