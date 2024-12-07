@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 /* libarchive */
 #include <archive.h>
 #include <archive_entry.h>
@@ -24,7 +25,7 @@
 /* Print error message and terminate the execution */
 static void  error_terminate(const char *msg, const char *details);
 /* Prints instructions on how to use the program. */
-static void  tldr_usage(void);
+static void  print_usage(void);
 /* Downloads pages. */
 static void  fetch_pages(void);
 /* Extracts pages and put them in place. */
@@ -63,7 +64,7 @@ error_terminate(const char *msg, const char *details)
 }
 
 inline void
-tldr_usage(void)
+print_usage(void)
 {
 	printf("USAGE: tldr [options] <[platform/]command>\n\n"
 	    "[options]\n"
@@ -311,24 +312,33 @@ open_index(const char *mode)
 int
 main(int argc, char *argv[])
 {
-	if (argc != 2) { /* Wrong number of arguments. */
-		tldr_usage();
+
+	int opt;
+
+	while ((opt = getopt(argc, argv, "luh")) != -1) {
+		switch (opt) {
+		case 'l':
+			list_pages();
+			return 0;
+		case 'u':
+			fetch_pages();
+			extract_pages();
+			index_pages();
+			return 0;
+		case 'h':
+			print_usage();
+			return 0;
+		default:
+			print_usage();
+			return 1;
+		}
+	}
+
+	if (argc != 2) {
+		print_usage();
 		return 1;
 	}
 
-	if (!strcmp("-h", argv[1])) { /* Show usage help. */
-		tldr_usage();
-	} else if (!strcmp("-u", argv[1])) { /* Update pages. */
-		puts("Fetching pages...");
-		fetch_pages();
-		puts("Extracting pages...");
-		extract_pages();
-		puts("Indexing pages...");
-		index_pages();
-	} else if (!strcmp("-l", argv[1])) { /* Print all pages names. */
-		list_pages();
-	} else {
-		display_page(argv[1]); /* Display a given page. */
-	}
+	display_page(argv[1]);
 	return 0;
 }
