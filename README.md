@@ -38,13 +38,11 @@ tldr windows/scoop # Or one could specify a platform.
 
 # DEPENDENCIES
 
-* ^[GNU Make][4]
-* ^[pkg-config][5]
-* ^[GCC][6] or [Clang][7]
+* [GNU Make][4]
+* [pkg-config][5]
+* [GCC][6] or [Clang][7]
 * [libarchive][8]
 * [libcurl][9]
-
-*^: compilation time dependencies.*
 
 # SUPPORTED OPERATING SYSTEMS
 
