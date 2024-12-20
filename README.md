@@ -1,5 +1,7 @@
 # tinytldr
 
+[![tinytldr status](https://builds.sr.ht/~kovmir/tinytldr.svg)](https://builds.sr.ht/~kovmir/tinytldr?)
+
 Minimalist [tldr][1] command line client, written in plain C99.
 
 # PREVIEW
@@ -42,7 +44,7 @@ tldr windows/scoop # Or one could specify a platform.
 * [libarchive][8]
 * [libcurl][9]
 
-*^: compilation time only dependencies.*
+*^: compilation time dependencies.*
 
 # SUPPORTED OPERATING SYSTEMS
 
@@ -54,7 +56,15 @@ tldr windows/scoop # Or one could specify a platform.
 
 **Q: Can I use it to display my personal pages?**
 
-A: You can, see [this issue][10].
+A: Yes, you can.
+
+```bash
+TLDR_PAGES="$HOME/.local/share/tinytldr/pages"
+mkdir "$TLDR_PAGES/mypages"
+echo '# My custom page' > "$TLDR_PAGES/mypages/testpage.md"
+tldr -u
+tldr testpage
+```
 
 # CREDITS
 

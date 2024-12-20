@@ -1,0 +1,7 @@
+image: alpine/edge
+packages:
+  - build-base
+  - curl-dev
+  - libarchive-dev
+tasks:
+  - build: make -C tinytldr
