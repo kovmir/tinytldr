@@ -21,7 +21,7 @@ Minimalist [tldr][1] command line client, written in plain C99.
 Satisfy the [dependencies](#dependencies) first, and then:
 
 ```bash
-git clone https://github.com/kovmir/tinytldr
+git clone https://git.sr.ht/~kovmir/tinytldr
 cd tinytldr
 # Optional: Adjust ./config.h to your linking.
 make
