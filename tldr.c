@@ -61,7 +61,7 @@ static char zip_path[BUF_SIZE];
 inline void
 error_terminate(const char *msg, const char *details)
 {
-	fprintf(stderr, "%s; details: %s.\n", msg, details? details : "none");
+	fprintf(stderr, "%s; details: %s\n", msg, details? details : "none");
 	exit(1);
 }
 
@@ -105,7 +105,7 @@ fetch_pages(void)
 	/* Write in binary mode to avoid mangling with CRLFs in Windows. */
 	tldr_archive = fopen(zip_path, "wb");
 	if (!tldr_archive)
-		error_terminate("Failed to create a temporary file", NULL);
+		error_terminate("failed to create a temporary file", zip_path);
 
 	curl_global_init(CURL_GLOBAL_ALL);
 	ceh = curl_easy_init();
@@ -119,7 +119,7 @@ fetch_pages(void)
 	curl_global_cleanup();
 	fclose(tldr_archive);
 	if (cres != CURLE_OK)
-		error_terminate("Failed to fetch pages", err_curl);
+		error_terminate("failed to fetch pages", err_curl);
 }
 
 void
@@ -134,15 +134,15 @@ extract_pages(void)
 
 	tldr_archive = fopen(zip_path, "r");
 	if (tldr_archive == NULL)
-		error_terminate("Failed to open the archive", NULL);
+		error_terminate("failed to open the archive", zip_path);
 
 	ap = archive_read_new();
 	if (ap == NULL)
-		error_terminate("Failed to archive_read_new()", NULL);
+		error_terminate("failed to archive_read_new()", NULL);
 	archive_read_support_format_zip(ap);
 	ares = archive_read_open_FILE(ap, tldr_archive);
 	if (ares != ARCHIVE_OK)
-		error_terminate("Failed to archive_read_open_FILE()",
+		error_terminate("failed to archive_read_open_FILE()",
 		    archive_error_string(ap));
 
 	/* A place inside the archive to extract pages from. */
@@ -164,7 +164,7 @@ extract_pages(void)
 		archive_entry_set_pathname(aep, dest_path);
 		ares = archive_read_extract(ap, aep, 0);
 		if (ares != ARCHIVE_OK)
-			error_terminate("Failed to archive_read_extract()",
+			error_terminate("failed to archive_read_extract()",
 			    archive_error_string(ap));
 	}
 	archive_read_free(ap);
@@ -251,8 +251,8 @@ setup_console(void)
 	stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	GetConsoleMode(stdout_handle, &outmode_init);
 	if (!SetConsoleMode(stdout_handle, ENABLE_WIN_VT100_OUT)){
-		error_terminate("\nYou are likely using an older version of Windows,"
-		"\nwhich is not yet compatible with this client.\n", NULL);
+		error_terminate("\nyou are likely using an older version of Windows,"
+		"\nwhich is not yet compatible with this client\n", NULL);
 	}
 }
 void
@@ -273,7 +273,7 @@ display_page(const char *page_name)
 
 	dest_path = find_page(page_name);
 	if (!dest_path)
-		error_terminate("The page has not been found.", NULL);
+		error_terminate("the page has not been found", page_name);
 
 	snprintf(buf, BUF_SIZE, "%s%s%s/%s",
 			getenv("HOME"), PAGES_PATH, PAGES_LANG, dest_path);
@@ -313,8 +313,7 @@ open_index(const char *mode)
 			getenv("HOME"), PAGES_PATH, "index");
 	fp = fopen(buf, mode);
 	if (!fp)
-		error_terminate("Failed to open index; "
-		    "you should probably run 'tldr -u'", mode);
+		error_terminate("failed to open index", "run 'tldr -u'");
 	return fp;
 }
 
