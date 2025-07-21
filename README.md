@@ -12,12 +12,6 @@ Minimalist [tldr][1] command line client, written in plain C99.
 
 # INSTALL
 
-## Package
-
-* [Slackware][3]
-
-## Compile from source
-
 Satisfy the [dependencies](#dependencies) first, and then:
 
 ```bash
@@ -33,7 +27,8 @@ sudo make install
 ```bash
 tldr -u # Fetch or update pages.
 tldr cd # View 'cd' page.
-tldr windows/scoop # Or one could specify a platform.
+tldr windows/scoop # One could specify a platform.
+tldr common/git-apply
 ```
 
 # DEPENDENCIES
@@ -75,12 +70,10 @@ project.
 
 [1]: https://tldr.sh/
 [2]: https://srcery.sh/
-[3]: https://slackbuilds.org/repository/15.0/misc/tinytldr/?search=tinytldr
 [4]: https://www.gnu.org/software/make/
 [5]: https://gitlab.freedesktop.org/pkg-config/pkg-config
 [6]: https://gcc.gnu.org/
 [7]: https://clang.llvm.org/
 [8]: https://www.libarchive.org/
 [9]: https://curl.se/libcurl/
-[10]: https://github.com/kovmir/tinytldr/issues/6#issuecomment-1884332215
 [11]: https://suckless.org/coding_style/
