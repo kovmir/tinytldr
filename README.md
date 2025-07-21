@@ -24,6 +24,8 @@ sudo make install
 
 # USAGE
 
+The client does/will not support [tldr client specification][3]:
+
 ```bash
 tldr -u # Fetch or update pages.
 tldr cd # View 'cd' page.
@@ -70,6 +72,7 @@ project.
 
 [1]: https://tldr.sh/
 [2]: https://srcery.sh/
+[3]: https://github.com/tldr-pages/tldr/blob/main/CLIENT-SPECIFICATION.md
 [4]: https://www.gnu.org/software/make/
 [5]: https://gitlab.freedesktop.org/pkg-config/pkg-config
 [6]: https://gcc.gnu.org/
