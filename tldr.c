@@ -146,7 +146,7 @@ extract_pages(void)
 		    archive_error_string(ap));
 
 	/* A place inside the archive to extract pages from. */
-	snprintf(src_path, BUF_SIZE, "%s%s/", "tldr-main", PAGES_LANG);
+	snprintf(src_path, BUF_SIZE, "%s/%s/", "tldr-main", PAGES_LANG);
 
 	/* Find the folder within the archive to extract from. */
 	while (archive_read_next_header(ap, &aep) != ARCHIVE_EOF)
@@ -157,7 +157,7 @@ extract_pages(void)
 				    src_path, strlen(src_path)))
 			break;
 
-		snprintf(dest_path, BUF_SIZE, "%s%s%s",
+		snprintf(dest_path, BUF_SIZE, "%s/%s%s",
 				getenv("HOME"), PAGES_PATH,
 				strchr(archive_entry_pathname(aep),'/'));
 
@@ -177,7 +177,7 @@ index_pages(void)
 {
 	char buf[BUF_SIZE];
 
-	snprintf(buf, BUF_SIZE, "%s%s%s",
+	snprintf(buf, BUF_SIZE, "%s/%s/%s",
 		getenv("HOME"), PAGES_PATH, PAGES_LANG);
 
 	tldr_index = open_index("w");
@@ -275,7 +275,7 @@ display_page(const char *page_name)
 	if (!dest_path)
 		error_terminate("the page has not been found", page_name);
 
-	snprintf(buf, BUF_SIZE, "%s%s%s/%s",
+	snprintf(buf, BUF_SIZE, "%s/%s/%s/%s",
 			getenv("HOME"), PAGES_PATH, PAGES_LANG, dest_path);
 
 	page = fopen(buf, "r");
@@ -309,7 +309,7 @@ open_index(const char *mode)
 	char buf[BUF_SIZE];
 	FILE *fp;
 
-	snprintf(buf, BUF_SIZE, "%s%s/%s",
+	snprintf(buf, BUF_SIZE, "%s/%s/%s",
 			getenv("HOME"), PAGES_PATH, "index");
 	fp = fopen(buf, mode);
 	if (!fp)

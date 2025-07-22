@@ -4,21 +4,21 @@
 static const char *PAGES_URL = "https://codeload.github.com/tldr-pages/tldr/zip/main";
 
 /* Path to store man pages relative to $HOME. */
-static const char *PAGES_PATH = "/.local/share/tinytldr";
+static const char *PAGES_PATH = ".local/share/tinytldr";
 
 /* Pages language, uncomment ONE of the following. */
-static const char *PAGES_LANG = "/pages";              /*  English */
-/* static const char *PAGES_LANG = "/pages.de"; */     /*   German */
-/* static const char *PAGES_LANG = "/pages.es"; */     /*  Spanish */
-/* static const char *PAGES_LANG = "/pages.fr"; */     /*   French */
-/* static const char *PAGES_LANG = "/pages.hbs"; */    /* Serbo-Croatian */
-/* static const char *PAGES_LANG = "/pages.it"; */     /*  Italian */
-/* static const char *PAGES_LANG = "/pages.ja"; */     /* Japanese */
-/* static const char *PAGES_LANG = "/pages.ko"; */     /*   Korean */
-/* static const char *PAGES_LANG = "/pages.pt_BR"; */  /* Portuguese: BR */
-/* static const char *PAGES_LANG = "/pages.pt_PT"; */  /* Portuguese: PT */
-/* static const char *PAGES_LANG = "/pages.ta"; */     /*   Tamil  */ 
-/* static const char *PAGES_LANG = "/pages.zh"; */     /*  Chinese */
+static const char *PAGES_LANG = "pages";              /*  English */
+/* static const char *PAGES_LANG = "pages.de"; */     /*   German */
+/* static const char *PAGES_LANG = "pages.es"; */     /*  Spanish */
+/* static const char *PAGES_LANG = "pages.fr"; */     /*   French */
+/* static const char *PAGES_LANG = "pages.hbs"; */    /* Serbo-Croatian */
+/* static const char *PAGES_LANG = "pages.it"; */     /*  Italian */
+/* static const char *PAGES_LANG = "pages.ja"; */     /* Japanese */
+/* static const char *PAGES_LANG = "pages.ko"; */     /*   Korean */
+/* static const char *PAGES_LANG = "pages.pt_BR"; */  /* Portuguese: BR */
+/* static const char *PAGES_LANG = "pages.pt_PT"; */  /* Portuguese: PT */
+/* static const char *PAGES_LANG = "pages.ta"; */     /*   Tamil  */ 
+/* static const char *PAGES_LANG = "pages.zh"; */     /*  Chinese */
 
 /* Colors and styling. */
 static const char *HEADING_STYLE = "\033[31m";
