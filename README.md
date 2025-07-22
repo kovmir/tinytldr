@@ -8,6 +8,9 @@ Minimalist [tldr][1] command line client, written in plain C99.
 
 ![screenshot](screenshot.png)
 
+* Never gets in the way.
+* Displays a page in under 5 ms.
+
 *[srcery][2] - terminal colorscheme on the screenshot.*
 
 # INSTALL
@@ -24,14 +27,16 @@ sudo make install
 
 # USAGE
 
-The client does/will not support [tldr client specification][3]:
-
 ```bash
 tldr -u # Fetch or update pages.
 tldr cd # View 'cd' page.
 tldr windows/scoop # One could specify a platform.
 tldr common/git-apply
 ```
+
+This implementation does not and will not support [tldr-pages client
+specification][3], as it makes clients identical for no reason and goes against
+the minimalist approach of this project.
 
 # DEPENDENCIES
 
