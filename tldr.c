@@ -146,7 +146,7 @@ extract_pages(void)
 		    archive_error_string(ap));
 
 	/* A place inside the archive to extract pages from. */
-	snprintf(src_path, BUF_SIZE, "%s/%s/", "tldr-main", PAGES_LANG);
+	snprintf(src_path, BUF_SIZE, "%s/%s/", PAGES_DIR, PAGES_LANG);
 
 	/* Find the folder within the archive to extract from. */
 	while (archive_read_next_header(ap, &aep) != ARCHIVE_EOF)

@@ -1,7 +1,9 @@
 /* See LICENSE file for copyright and license details. */
 
-/* URL to download man pages. */
+/* URL to download the archive with man pages. */
 static const char *PAGES_URL = "https://codeload.github.com/tldr-pages/tldr/zip/main";
+/* Path to PAGES_LANG (see below) directory within the archive. */
+static const char *PAGES_DIR = "tldr-main";
 
 /* Path to store man pages relative to $HOME. */
 static const char *PAGES_PATH = ".local/share/tinytldr";
