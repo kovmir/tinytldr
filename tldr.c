@@ -8,6 +8,7 @@
 
 #include <dirent.h>
 #include <ftw.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,8 +24,6 @@
 #define NULL_TERMINATE(arr, size) (arr[(size)-1] = 0)
 
 /* Function prototypes */
-/* Print error message and terminate the execution */
-static void  error_terminate(const char *msg, const char *details);
 /* Prints instructions on how to use the program. */
 static void  print_usage(void);
 /* Downloads pages. */
@@ -61,13 +60,6 @@ static const char *RESET_STYLING = "\033[0m\033[0K";
 static FILE *tldr_index;
 /* Path to download the tldr archive to. */
 static char zip_path[BUF_SIZE];
-
-inline void
-error_terminate(const char *msg, const char *details)
-{
-	fprintf(stderr, "%s; details: %s\n", msg, details? details : "none");
-	exit(1);
-}
 
 inline void
 print_usage(void)
@@ -108,8 +100,11 @@ fetch_pages(void)
 	
 	/* Write in binary mode to avoid mangling with CRLFs in Windows. */
 	tldr_archive = fopen(zip_path, "wb");
-	if (!tldr_archive)
-		error_terminate("failed to create a temporary file", zip_path);
+	if (!tldr_archive) {
+		fprintf(stderr,
+			"failed to create a temporary file: %s\n", zip_path);
+		exit(1);
+	}
 
 	curl_global_init(CURL_GLOBAL_ALL);
 	ceh = curl_easy_init();
@@ -122,8 +117,10 @@ fetch_pages(void)
 	curl_easy_cleanup(ceh);
 	curl_global_cleanup();
 	fclose(tldr_archive);
-	if (cres != CURLE_OK)
-		error_terminate("failed to fetch pages", err_curl);
+	if (cres != CURLE_OK) {
+		fprintf(stderr, "failed to fetch pages: %s\n", err_curl);
+		exit(1);
+	}
 }
 
 void
@@ -137,17 +134,23 @@ extract_pages(void)
 	struct archive_entry *aep;
 
 	tldr_archive = fopen(zip_path, "r");
-	if (tldr_archive == NULL)
-		error_terminate("failed to open the archive", zip_path);
+	if (tldr_archive == NULL) {
+		fprintf(stderr, "failed to open the archive: %s\n", zip_path);
+		exit(1);
+	}
 
 	ap = archive_read_new();
-	if (ap == NULL)
-		error_terminate("failed to archive_read_new()", NULL);
+	if (ap == NULL) {
+		fprintf(stderr, "failed to archive_read_new()\n");
+		exit(1);
+	}
 	archive_read_support_format_zip(ap);
 	ares = archive_read_open_FILE(ap, tldr_archive);
-	if (ares != ARCHIVE_OK)
-		error_terminate("failed to archive_read_open_FILE()",
+	if (ares != ARCHIVE_OK) {
+		fprintf(stderr, "failed to archive_read_open_FILE(): %s\n",
 		    archive_error_string(ap));
+		exit(1);
+	}
 
 	/* A place inside the archive to extract pages from. */
 	snprintf(src_path, BUF_SIZE, "%s/%s/", PAGES_DIR, PAGES_LANG);
@@ -167,9 +170,12 @@ extract_pages(void)
 
 		archive_entry_set_pathname(aep, dest_path);
 		ares = archive_read_extract(ap, aep, 0);
-		if (ares != ARCHIVE_OK)
-			error_terminate("failed to archive_read_extract()",
-			    archive_error_string(ap));
+		if (ares != ARCHIVE_OK) {
+			fprintf(stderr,
+				"failed to archive_read_extract(): %s\n",
+				archive_error_string(ap));
+			exit(1);
+		}
 	}
 	archive_read_free(ap);
 	fclose(tldr_archive);
@@ -222,8 +228,11 @@ delete_nftw_cb(const char *path, const struct stat *sb,
 	(void)ftwbuf;
 	(void)typeflag;
 
-	if (remove(path) != 0)
-		error_terminate("failed to remove file", path);
+	if (remove(path) != 0) {
+		fprintf(stderr, "failed to remove file %s: %s\n",
+				path, strerror(errno));
+		exit(1);
+	}
 	return 0;
 }
 
@@ -277,8 +286,9 @@ setup_console(void)
 	stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	GetConsoleMode(stdout_handle, &outmode_init);
 	if (!SetConsoleMode(stdout_handle, ENABLE_WIN_VT100_OUT)){
-		error_terminate("\nyou are likely using an older version of Windows,"
-		"\nwhich is not yet compatible with this client\n", NULL);
+		fprintf(stderr, "\nyou are likely using an older version of Windows,"
+		"\nwhich is not yet compatible with this client\n");
+		exit(1);
 	}
 }
 void
@@ -298,8 +308,11 @@ display_page(const char *page_name)
 	FILE *page;
 
 	dest_path = find_page(page_name);
-	if (!dest_path)
-		error_terminate("the page has not been found", page_name);
+	if (!dest_path) {
+		fprintf(stderr, "the page has not been found: %s\n",
+				page_name);
+		exit(1);
+	}
 
 	snprintf(buf, BUF_SIZE, "%s/%s/%s/%s",
 			getenv("HOME"), PAGES_PATH, PAGES_LANG, dest_path);
@@ -338,8 +351,10 @@ open_index(const char *mode)
 	snprintf(buf, BUF_SIZE, "%s/%s/%s",
 			getenv("HOME"), PAGES_PATH, "index");
 	fp = fopen(buf, mode);
-	if (!fp)
-		error_terminate("failed to open index", "run 'tldr -u'");
+	if (!fp) {
+		fprintf(stderr, "failed to open index, run 'tldr -u'\n");
+		exit(1);
+	}
 	return fp;
 }
 
