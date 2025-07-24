@@ -33,7 +33,11 @@ static void  fetch_pages(void);
 static void  extract_pages(void);
 /* Creates index file of all pages. */
 static void  index_pages(void);
-static int   nftw_callback(const char *path, const struct stat *sb,
+static int   index_nftw_cb(const char *path, const struct stat *sb,
+				int typeflag, struct FTW *ftwbuf);
+/* Delete all pages from disk. */
+static void  delete_pages(void);
+static int   delete_nftw_cb(const char *path, const struct stat *sb,
 				int typeflag, struct FTW *ftwbuf);
 /* Prints all page names. */
 static void  list_pages(void);
@@ -181,12 +185,12 @@ index_pages(void)
 		getenv("HOME"), PAGES_PATH, PAGES_LANG);
 
 	tldr_index = open_index("w");
-	nftw(buf, nftw_callback, 10, FTW_PHYS);
+	nftw(buf, index_nftw_cb, 10, FTW_PHYS);
 	fclose(tldr_index);
 }
 
 int
-nftw_callback(const char *path, const struct stat *sb,
+index_nftw_cb(const char *path, const struct stat *sb,
 			int typeflag, struct FTW *ftwbuf)
 {
 	(void)sb; /* Suppress compiler warnings about unused arguments. */
@@ -198,6 +202,28 @@ nftw_callback(const char *path, const struct stat *sb,
 	/* Truncate the full path to include only the filename and last dir. */
 	fprintf(tldr_index, "%s\n",
 			strchr(strstr(path, PAGES_LANG)+1, '/')+1);
+	return 0;
+}
+
+void
+delete_pages(void)
+{
+	char buf[BUF_SIZE];
+
+	snprintf(buf, BUF_SIZE, "%s/%s", getenv("HOME"), PAGES_PATH);
+	nftw(buf, delete_nftw_cb, 64, FTW_DEPTH | FTW_PHYS);
+}
+
+int
+delete_nftw_cb(const char *path, const struct stat *sb,
+				int typeflag, struct FTW *ftwbuf)
+{
+	(void)sb; /* Suppress compiler warnings about unused arguments. */
+	(void)ftwbuf;
+	(void)typeflag;
+
+	if (remove(path) != 0)
+		error_terminate("failed to remove file", path);
 	return 0;
 }
 
@@ -322,7 +348,7 @@ main(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "luh")) != -1) {
+	while ((opt = getopt(argc, argv, "ludh")) != -1) {
 		switch (opt) {
 		case 'l':
 			list_pages();
@@ -334,6 +360,9 @@ main(int argc, char *argv[])
 			extract_pages();
 			puts("Indexing pages...");
 			index_pages();
+			return 0;
+		case 'd':
+			delete_pages();
 			return 0;
 		case 'h':
 			print_usage();
