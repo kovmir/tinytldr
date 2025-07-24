@@ -50,6 +50,9 @@ clean:
 strip:
 	$(STRIP) ./$(PROJECT)
 
+bench:
+	hyperfine -N './tldr tar'
+
 install:
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
 	$(INSTALL) ./$(PROJECT) "$(DESTDIR)$(PREFIX)/bin/$(PROJECT)"
