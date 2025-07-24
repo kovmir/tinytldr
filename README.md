@@ -62,7 +62,7 @@ A: Yes, you can.
 TLDR_PAGES="$HOME/.local/share/tinytldr/pages"
 mkdir "$TLDR_PAGES/mypages"
 echo '# My custom page' > "$TLDR_PAGES/mypages/testpage.md"
-tldr -u
+tldr -i
 tldr testpage
 ```
 

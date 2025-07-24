@@ -363,7 +363,7 @@ main(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "ludh")) != -1) {
+	while ((opt = getopt(argc, argv, "ludih")) != -1) {
 		switch (opt) {
 		case 'l':
 			list_pages();
@@ -377,7 +377,12 @@ main(int argc, char *argv[])
 			index_pages();
 			return 0;
 		case 'd':
+			puts("Deleting pages...");
 			delete_pages();
+			return 0;
+		case 'i':
+			puts("Indexing pages...");
+			index_pages();
 			return 0;
 		case 'h':
 			print_usage();
