@@ -26,6 +26,8 @@
 /* Function prototypes */
 /* Prints instructions on how to use the program. */
 static void  print_usage(void);
+/* Print the contents of 'config.h'. */
+static void  print_config(void);
 /* Downloads pages. */
 static void  fetch_pages(void);
 /* Extracts pages and put them in place. */
@@ -71,6 +73,7 @@ print_usage(void)
 	    "\t-i\trebuild pages index\n"
 	    "\t-l\tlist all available pages\n"
 	    "\t-h\tshow this help message\n"
+	    "\t-c\tview compiled config values\n"
 	    "\t-v\tdisplay program version\n\n"
 	    "[platform]\n"
 	    "\tandroid\n"
@@ -84,6 +87,27 @@ print_usage(void)
 	    "\twindows\n\n"
 	    "<command>\n"
 	    "\tShow examples for this command\n");
+}
+
+inline void
+print_config(void)
+{
+	printf("PAGES_URL='%s'\n"
+		"PAGES_DIR='%s'\n"
+		"PAGES_PATH='%s'\n"
+		"PAGES_LANG='%s'\n"
+		"%sHEADING_STYLE%s\n"
+		"%sSUBHEADING_STYLE%s\n"
+		"%sCOMMAND_DESC_STYLE%s\n"
+		"%sCOMMAND_STYLE%s\n",
+		PAGES_URL,
+		PAGES_DIR,
+		PAGES_PATH,
+		PAGES_LANG,
+		HEADING_STYLE, RESET_STYLING,
+		SUBHEADING_STYLE, RESET_STYLING,
+		COMMAND_DESC_STYLE, RESET_STYLING,
+		COMMAND_STYLE, RESET_STYLING);
 }
 
 void
@@ -368,7 +392,7 @@ main(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "udilhv")) != -1) {
+	while ((opt = getopt(argc, argv, "udilhcv")) != -1) {
 		switch (opt) {
 		case 'u':
 			puts("Fetching pages...");
@@ -391,6 +415,9 @@ main(int argc, char *argv[])
 			return 0;
 		case 'h':
 			print_usage();
+			return 0;
+		case 'c':
+			print_config();
 			return 0;
 		case 'v':
 			puts(GIT_DESC);
