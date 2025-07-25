@@ -16,6 +16,7 @@ CFLAGS += -Wundef
 CFLAGS += -Wno-format-truncation
 
 CFLAGS += -D_XOPEN_SOURCE=500
+CFLAGS += -DGIT_DESC=\"$(shell git describe --tags)\"
 
 CFLAGS += $(INCS)
 LDFLAGS += $(LIBS)

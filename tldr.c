@@ -70,6 +70,7 @@ print_usage(void)
 	    "\t-l\tshow all available pages\n"
 	    "\t-d\tdelete pages from disk\n"
 	    "\t-i\tre-build page index, do this if you add pages manually\n"
+	    "\t-v\tdisplay program version\n"
 	    "\t-u\tfetch lastest copies of man pages\n\n"
 	    "[platform]\n"
 	    "\tandroid\n"
@@ -365,7 +366,7 @@ main(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "ludih")) != -1) {
+	while ((opt = getopt(argc, argv, "ludivh")) != -1) {
 		switch (opt) {
 		case 'l':
 			list_pages();
@@ -385,6 +386,9 @@ main(int argc, char *argv[])
 		case 'i':
 			puts("Indexing pages...");
 			index_pages();
+			return 0;
+		case 'v':
+			puts(GIT_DESC);
 			return 0;
 		case 'h':
 			print_usage();
