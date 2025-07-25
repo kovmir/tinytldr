@@ -66,22 +66,22 @@ print_usage(void)
 {
 	printf("USAGE: tldr [options] <[platform/]command>\n\n"
 	    "[options]\n"
-	    "\t-h\tthis help overview\n"
-	    "\t-l\tshow all available pages\n"
+	    "\t-u\tfetch lastest copies of man pages\n"
 	    "\t-d\tdelete pages from disk\n"
-	    "\t-i\tre-build page index, do this if you add pages manually\n"
-	    "\t-v\tdisplay program version\n"
-	    "\t-u\tfetch lastest copies of man pages\n\n"
+	    "\t-i\trebuild pages index\n"
+	    "\t-l\tlist all available pages\n"
+	    "\t-h\tshow this help message\n"
+	    "\t-v\tdisplay program version\n\n"
 	    "[platform]\n"
-	    "\tandroid"
-	    "\tcommon "
-	    "\tfreebsd"
-	    "\tlinux"
-	    "\tnetbsd"
-	    "\topenbsd"
-	    "\tosx"
-	    "\tsunos"
-	    "\twindows"
+	    "\tandroid\n"
+	    "\tcommon\n"
+	    "\tfreebsd\n"
+	    "\tlinux\n"
+	    "\tnetbsd\n"
+	    "\topenbsd\n"
+	    "\tosx\n"
+	    "\tsunos\n"
+	    "\twindows\n\n"
 	    "<command>\n"
 	    "\tShow examples for this command\n");
 }
@@ -368,11 +368,8 @@ main(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "ludivh")) != -1) {
+	while ((opt = getopt(argc, argv, "udilhv")) != -1) {
 		switch (opt) {
-		case 'l':
-			list_pages();
-			return 0;
 		case 'u':
 			puts("Fetching pages...");
 			fetch_pages();
@@ -389,11 +386,14 @@ main(int argc, char *argv[])
 			puts("Indexing pages...");
 			index_pages();
 			return 0;
-		case 'v':
-			puts(GIT_DESC);
+		case 'l':
+			list_pages();
 			return 0;
 		case 'h':
 			print_usage();
+			return 0;
+		case 'v':
+			puts(GIT_DESC);
 			return 0;
 		default:
 			print_usage();
