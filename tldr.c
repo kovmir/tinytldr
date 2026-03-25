@@ -1,7 +1,5 @@
-/* MIT License
- * Copyright 2024 Ivan Kovmir */
-
 /* Includes */
+
 /* cURL must be included before libarchive in order to avoid a compiler
  * warning on Windows regarding the Winsock2 library. */
 #include <curl/curl.h>
