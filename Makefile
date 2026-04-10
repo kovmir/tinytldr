@@ -1,7 +1,7 @@
 CC ?= cc
 
-LIBNOTIFY_LIBS = `pkg-config --libs libarchive libcurl`
-LIBNOTIFY_INCS = `pkg-config --cflags libarchive libcurl`
+LIBNOTIFY_LIBS = $(shell pkg-config --libs libarchive libcurl)
+LIBNOTIFY_INCS = $(shell pkg-config --cflags libarchive libcurl)
 
 LIBS += $(LIBNOTIFY_LIBS)
 INCS += $(LIBNOTIFY_INCS)
