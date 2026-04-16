@@ -3,5 +3,7 @@ packages:
   - build-base
   - curl-dev
   - libarchive-dev
+  - python3
 tasks:
-  - build: make -C tinytldr
+  - build: CFLAGS='-Werror' make -C tinytldr
+  - test:  CFLAGS='-Werror' make -C tinytldr test
