@@ -13,6 +13,9 @@ _test_dir='common'
 _test_page='testpage1.md'
 # Simulate pages archive.
 mkdir -p "$_dir/$_lang/$_test_dir"
+mkdir -p "$_dir/some_crap_inside"
+echo 'blah' > "$_dir/some_crap_inside/crap.txt"
+echo 'ouch' > "$_dir/some_crap_inside/sumthin.txt"
 cat <<EOF > "$_dir/$_lang/$_test_dir/$_test_page"
 # heading
 
@@ -38,18 +41,27 @@ else
 fi
 
 if [[ -f "$_path/$_lang/$_test_dir/$_test_page" ]]; then
-	echo "2 OK"
+	echo '2 OK'
 else
-	echo "2 NOT OK"
+	echo '2 NOT OK'
 	exit 1
 fi
 
 _expected=$'^# heading\n-^> subheading\n-^- cmd description:\n-^`cmd itself`\n-'
 _actual="$(./tldr testpage1)"
 if [[ "$_actual" == "$_expected" ]]; then
-	echo "3 OK"
+	echo '3 OK'
 else
-	echo "3 NOT OK"
+	echo '3 NOT OK'
+	exit 1
+fi
+
+_expected="$_test_dir/$_test_page"
+_actual="$(./tldr -l)"
+if [[ "$_actual" == "$_expected" ]]; then
+	echo '4 OK'
+else
+	echo '4 NOT OK'
 	exit 1
 fi
 

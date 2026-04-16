@@ -291,7 +291,7 @@ list_pages(void)
 
 	tldr_index = open_index("r");
 	while(fgets(buf, BUF_SIZE, tldr_index))
-		puts(buf);
+		printf("%s", buf);
 	fclose(tldr_index);
 }
 
