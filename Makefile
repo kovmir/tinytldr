@@ -29,8 +29,8 @@ STRIP ?= strip
 
 # Config values for debug build.
 PAGES_URL = http://localhost:1337/archive.zip
-PAGES_DIR = tldrpages
-PAGES_PATH = ./debug_pages_dir
+PAGES_DIR = to_be_archived_tldrpages
+PAGES_PATH = ./tldrpages_extracted
 PAGES_LANG = lang
 HEADING_STYLE = ^
 SUBHEADING_STYLE = ^
@@ -54,6 +54,9 @@ debug:
 		-DDEBUG_COMMAND_DESC_STYLE=\"$(COMMAND_DESC_STYLE)\" \
 		-DDEBUG_COMMAND_STYLE=\"$(COMMAND_STYLE)\" \
 		$(PROJECT).c $(LDFLAGS) -o $(PROJECT)
+
+test: debug
+	./test.sh $(PAGES_URL) $(PAGES_DIR) $(PAGES_PATH) $(PAGES_LANG)
 
 gdb: debug
 	gdb ./$(PROJECT)

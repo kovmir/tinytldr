@@ -70,7 +70,11 @@ static const char *COMMAND_STYLE = DEBUG_COMMAND_STYLE;
 
 /* Resets console styling back to default (usually white-on-black),
    and clears rest of current line for consistency on Windows. */
+#ifndef DEBUG
 static const char *RESET_STYLING = "\033[0m\033[0K";
+#else
+static const char *RESET_STYLING = "-";
+#endif /* DEBUG */
 /* Index file to hold available page names. */
 static FILE *tldr_index;
 /* Path to download the tldr archive to. */
