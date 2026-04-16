@@ -27,9 +27,11 @@ PROJECT = tldr
 INSTALL ?= install
 STRIP ?= strip
 
-all:
+build: CFLAGS += -DBUILD_TYPE=\"release\"
+build:
 	$(CC) $(CFLAGS) -O3 $(PROJECT).c $(LDFLAGS) -o $(PROJECT)
 
+debug: CFLAGS += -DBUILD_TYPE=\"debug\"
 debug:
 	$(CC) $(CFLAGS) -g $(PROJECT).c $(LDFLAGS) -o $(PROJECT)
 

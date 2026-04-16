@@ -421,7 +421,7 @@ main(int argc, char *argv[])
 			print_config();
 			return 0;
 		case 'v':
-			puts(GIT_DESC);
+			puts(GIT_DESC" "BUILD_TYPE);
 			return 0;
 		default:
 			print_usage();
