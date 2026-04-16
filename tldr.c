@@ -2,24 +2,24 @@
  * Copyright (c) 2026 Ivan Kovmir */
 
 /* Includes */
+#include <dirent.h>
+#include <err.h>
+#include <errno.h>
+#include <ftw.h>
+#include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* cURL must be included before libarchive in order to avoid a compiler
  * warning on Windows regarding the Winsock2 library. */
 #include <curl/curl.h>
-
-#include <dirent.h>
-#include <ftw.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <getopt.h>
 /* libarchive */
 #include <archive.h>
 #include <archive_entry.h>
 
 /* Constants and Macros */
-#define BUF_SIZE 1024
+#define BUF_SIZE 4096
 #define D_NAME entry->d_name
 #define ENABLE_WIN_VT100_OUT 7
 #define NULL_TERMINATE(arr, size) (arr[(size)-1] = 0)
@@ -130,10 +130,10 @@ print_config(void)
 void
 fetch_pages(void)
 {
-	CURL *ceh; /* cURL easy handle. */
-	CURLcode cres; /* cURL operation result. */
-	char err_curl[CURL_ERROR_SIZE]; /* Curl error message buffer. */
-	FILE *tldr_archive; /* File to download to. */
+	CURL *curl_handle; /* cURL easy handle. */
+	CURLcode curl_res; /* cURL operation result. */
+	char curl_err[CURL_ERROR_SIZE]; /* Curl error message buffer. */
+	FILE *tldr_archive; /* Downloaded file. */
 
 	if (getenv("TEMP") != NULL) /* Defined by Windows. */
 		strcpy(zip_path, getenv("TEMP"));
@@ -146,89 +146,82 @@ fetch_pages(void)
 
 	/* Write in binary mode to avoid mangling with CRLFs in Windows. */
 	tldr_archive = fopen(zip_path, "wb");
-	if (!tldr_archive) {
-		fprintf(stderr,
-			"failed to create a temporary file: %s\n", zip_path);
-		exit(1);
-	}
+	if (tldr_archive == NULL)
+		err(1, "failed to open %s", zip_path);
 
 	curl_global_init(CURL_GLOBAL_ALL);
-	ceh = curl_easy_init();
-	curl_easy_setopt(ceh, CURLOPT_WRITEDATA, tldr_archive);
-	curl_easy_setopt(ceh, CURLOPT_URL, PAGES_URL);
-	curl_easy_setopt(ceh, CURLOPT_ERRORBUFFER, err_curl);
+	curl_handle = curl_easy_init();
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, tldr_archive);
+	curl_easy_setopt(curl_handle, CURLOPT_URL, PAGES_URL);
+	curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, curl_err);
 
-	cres = curl_easy_perform(ceh);
+	curl_res = curl_easy_perform(curl_handle);
 
-	curl_easy_cleanup(ceh);
+	curl_easy_cleanup(curl_handle);
 	curl_global_cleanup();
 	fclose(tldr_archive);
-	if (cres != CURLE_OK) {
-		fprintf(stderr, "failed to fetch pages: %s\n", err_curl);
-		exit(1);
-	}
+
+	if (curl_res != CURLE_OK)
+		errx(1, "failed to fetch pages: %s", curl_err);
 }
 
 void
 extract_pages(void)
 {
 	char src_path[BUF_SIZE]; /* Path within archive to extract from. */
-	char dest_path[BUF_SIZE]; /* Path to save pages to. */
+	char dest_path[BUF_SIZE]; /* Save the extracted pages here. */
 	FILE *tldr_archive; /* Pointer to downloaded zip file. */
-	int ares; /* libarchive status. */
-	struct archive *ap;
-	struct archive_entry *aep;
+	int liba_res; /* libarchive result. */
+	struct archive *archp;
+	struct archive_entry *entryp;
 
 	tldr_archive = fopen(zip_path, "r");
-	if (tldr_archive == NULL) {
-		fprintf(stderr, "failed to open the archive: %s\n", zip_path);
-		exit(1);
+	if (tldr_archive == NULL)
+		err(1, "failed to open %s", zip_path);
+
+	archp = archive_read_new();
+	if (archp == NULL)
+		errx(1, "failed to archive_read_new()");
+
+	archive_read_support_format_zip(archp);
+
+	liba_res = archive_read_open_FILE(archp, tldr_archive);
+	if (liba_res != ARCHIVE_OK) {
+		errx(1, "failed to archive_read_open_FILE(): %s",
+		    archive_error_string(archp));
 	}
 
-	ap = archive_read_new();
-	if (ap == NULL) {
-		fprintf(stderr, "failed to archive_read_new()\n");
-		exit(1);
-	}
-	archive_read_support_format_zip(ap);
-	ares = archive_read_open_FILE(ap, tldr_archive);
-	if (ares != ARCHIVE_OK) {
-		fprintf(stderr, "failed to archive_read_open_FILE(): %s\n",
-		    archive_error_string(ap));
-		exit(1);
-	}
-
-	/* A place inside the archive to extract pages from. */
 	snprintf(src_path, BUF_SIZE, "%s/%s/", PAGES_DIR, PAGES_LANG);
 
-	/* Find the folder within the archive to extract from. */
-	while (archive_read_next_header(ap, &aep) != ARCHIVE_EOF)
-		if (!strcmp(archive_entry_pathname(aep), src_path))
+	/* Find the directory within the archive to extract from. */
+	while (archive_read_next_header(archp, &entryp) != ARCHIVE_EOF) {
+		if (strcmp(archive_entry_pathname(entryp), src_path) == 0)
 			break;
-	while (archive_read_next_header(ap, &aep) != ARCHIVE_EOF) {
-		if (strncmp(archive_entry_pathname(aep),
-				    src_path, strlen(src_path)))
-			break;
+	}
+	while (archive_read_next_header(archp, &entryp) != ARCHIVE_EOF) {
+		if (strncmp(archive_entry_pathname(entryp), src_path,
+				strlen(src_path)) != 0) {
+			break; /* Done processing the pages directory. */
+		}
 
-		if (PAGES_PATH[0] == '~')
-			snprintf(dest_path, BUF_SIZE, "%s/%s%s",
-					getenv("HOME"), PAGES_PATH + 1,
-					strchr(archive_entry_pathname(aep),'/'));
-		else
-			snprintf(dest_path, BUF_SIZE, "%s%s",
-					PAGES_PATH,
-					strchr(archive_entry_pathname(aep),'/'));
+		if (PAGES_PATH[0] == '~') {
+			snprintf(dest_path, BUF_SIZE, "%s/%s/%s",
+				getenv("HOME"), PAGES_PATH+2,
+				strchr(archive_entry_pathname(entryp),'/')+1);
+		} else {
+			snprintf(dest_path, BUF_SIZE, "%s/%s",
+				PAGES_PATH,
+				strchr(archive_entry_pathname(entryp),'/')+1);
+		}
 
-		archive_entry_set_pathname(aep, dest_path);
-		ares = archive_read_extract(ap, aep, 0);
-		if (ares != ARCHIVE_OK) {
-			fprintf(stderr,
-				"failed to archive_read_extract(): %s\n",
-				archive_error_string(ap));
-			exit(1);
+		archive_entry_set_pathname(entryp, dest_path);
+		liba_res = archive_read_extract(archp, entryp, 0);
+		if (liba_res != ARCHIVE_OK) {
+			errx(1, "failed to archive_read_extract(): %s",
+				archive_error_string(archp));
 		}
 	}
-	archive_read_free(ap);
+	archive_read_free(archp);
 	fclose(tldr_archive);
 	remove(zip_path);
 }
@@ -238,11 +231,12 @@ index_pages(void)
 {
 	char buf[BUF_SIZE];
 
-	if (PAGES_PATH[0] == '~')
-		snprintf(buf, BUF_SIZE, "%s%s/%s",
-			getenv("HOME"), PAGES_PATH+1, PAGES_LANG);
-	else
+	if (PAGES_PATH[0] == '~') {
+		snprintf(buf, BUF_SIZE, "%s/%s/%s",
+			getenv("HOME"), PAGES_PATH+2, PAGES_LANG);
+	} else {
 		snprintf(buf, BUF_SIZE, "%s/%s", PAGES_PATH, PAGES_LANG);
+	}
 
 	tldr_index = open_index("w");
 	nftw(buf, index_nftw_cb, 10, FTW_PHYS);
@@ -256,8 +250,8 @@ index_nftw_cb(const char *path, const struct stat *sb,
 	(void)sb; /* Suppress compiler warnings about unused arguments. */
 	(void)ftwbuf;
 
-	if (typeflag != FTW_F) /* Skip everything except files. */
-		return 0;
+	if (typeflag != FTW_F)
+		return 0; /* Skip everything except files. */
 
 	/* Truncate the full path to include only the filename and last dir. */
 	fprintf(tldr_index, "%s\n",
@@ -271,7 +265,7 @@ delete_pages(void)
 	char buf[BUF_SIZE];
 
 	if (PAGES_PATH[0] == '~')
-		snprintf(buf, BUF_SIZE, "%s%s", getenv("HOME"), PAGES_PATH+1);
+		snprintf(buf, BUF_SIZE, "%s/%s", getenv("HOME"), PAGES_PATH+2);
 	else
 		strncpy(buf, PAGES_PATH, BUF_SIZE);
 	nftw(buf, delete_nftw_cb, 64, FTW_DEPTH | FTW_PHYS);
@@ -285,11 +279,8 @@ delete_nftw_cb(const char *path, const struct stat *sb,
 	(void)ftwbuf;
 	(void)typeflag;
 
-	if (remove(path) != 0) {
-		fprintf(stderr, "failed to remove file %s: %s\n",
-				path, strerror(errno));
-		exit(1);
-	}
+	if (remove(path) != 0)
+		err(1, "failed to remove %s", path);
 	return 0;
 }
 
@@ -299,10 +290,8 @@ list_pages(void)
 	char buf[BUF_SIZE];
 
 	tldr_index = open_index("r");
-	while(fgets(buf, BUF_SIZE, tldr_index)) {
-		NULL_TERMINATE(buf, BUF_SIZE);
-		printf("%s", buf);
-	}
+	while(fgets(buf, BUF_SIZE, tldr_index))
+		puts(buf);
 	fclose(tldr_index);
 }
 
@@ -317,14 +306,14 @@ find_page(const char *page_name)
 	while(fgets(buf, BUF_SIZE, tldr_index)) {
 		/* page_name is either 'command' or 'platform/command'. */
 		if (strchr(page_name, '/')) { /* platform/command */
-			if(!strcmp(page_filename, buf)) {
-				*strchr(buf, '\n') = '\0';
+			if(strcmp(page_filename, buf) == 0) {
+				*strchr(buf, '\n') = 0;
 				fclose(tldr_index);
 				return buf;
 			}
 		} else { /* command */
 			if (!strcmp(page_filename, strchr(buf, '/')+1)) {
-				*strchr(buf, '\n') = '\0';
+				*strchr(buf, '\n') = 0;
 				fclose(tldr_index);
 				return buf;
 			}
@@ -365,38 +354,38 @@ display_page(const char *page_name)
 	FILE *page;
 
 	dest_path = find_page(page_name);
-	if (!dest_path) {
-		fprintf(stderr, "the page has not been found: %s\n",
-				page_name);
-		exit(1);
-	}
+	if (!dest_path)
+		errx(1, "%s has not been found", page_name);
 
-	if (PAGES_PATH[0] == '~')
-		snprintf(buf, BUF_SIZE, "%s%s/%s/%s",
-				getenv("HOME"), PAGES_PATH+1, PAGES_LANG, dest_path);
-	else
+	if (PAGES_PATH[0] == '~') {
+		snprintf(buf, BUF_SIZE, "%s/%s/%s/%s",
+			getenv("HOME"), PAGES_PATH+2, PAGES_LANG, dest_path);
+	} else {
 		snprintf(buf, BUF_SIZE, "%s/%s/%s",
-				PAGES_PATH, PAGES_LANG, dest_path);
-
+			PAGES_PATH, PAGES_LANG, dest_path);
+	}
 
 	page = fopen(buf, "r");
 	setup_console(); /* Enables VT100 processing in Win10 1503+ */
 	while (fgets(buf, BUF_SIZE, page)) {
-		NULL_TERMINATE(buf, BUF_SIZE);
-		if (!strcmp(buf, "\n")) {
+		if (strcmp(buf, "\n") == 0) {
 			continue; /* Skip empty lines. */
 		}
 		if (buf[0] == '#') {
-			printf("%s%s%s", HEADING_STYLE, buf, RESET_STYLING);
+			printf("%s%s%s",
+				HEADING_STYLE, buf, RESET_STYLING);
 		}
 		if (buf[0] == '>') {
-			printf("%s%s%s", SUBHEADING_STYLE, buf, RESET_STYLING);
+			printf("%s%s%s",
+				SUBHEADING_STYLE, buf, RESET_STYLING);
 		}
 		if (buf[0] == '-') {
-			printf("%s%s%s", COMMAND_DESC_STYLE, buf, RESET_STYLING);
+			printf("%s%s%s",
+				COMMAND_DESC_STYLE, buf, RESET_STYLING);
 		}
 		if (buf[0] == '`') {
-			printf("%s%s%s", COMMAND_STYLE, buf, RESET_STYLING);
+			printf("%s%s%s",
+				COMMAND_STYLE, buf, RESET_STYLING);
 		}
 
 	}
@@ -410,18 +399,16 @@ open_index(const char *mode)
 	char buf[BUF_SIZE];
 	FILE *fp;
 
-	if (PAGES_PATH[0] == '~')
-		snprintf(buf, BUF_SIZE, "%s%s/%s",
-				getenv("HOME"), PAGES_PATH+1, "index");
-	else
+	if (PAGES_PATH[0] == '~') {
+		snprintf(buf, BUF_SIZE, "%s/%s/%s",
+				getenv("HOME"), PAGES_PATH+2, "index");
+	} else {
 		snprintf(buf, BUF_SIZE, "%s/%s", PAGES_PATH, "index");
-
+	}
 
 	fp = fopen(buf, mode);
-	if (!fp) {
-		fprintf(stderr, "failed to open index, run 'tldr -u'\n");
-		exit(1);
-	}
+	if (fp == NULL)
+		err(1, "failed to open index, probably run `tldr -u`\n");
 	return fp;
 }
 
