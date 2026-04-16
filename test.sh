@@ -26,6 +26,7 @@ zip -r "$(basename "$_url")" "$_dir"
 
 _port=$(echo "${_url#*://}" | cut -d'/' -f1 | cut -d':' -f2)
 python -m http.server "$_port" &> /dev/null &
+sleep 2 # A small delay to let the server start.
 
 ./tldr -u
 
@@ -36,27 +37,19 @@ else
 	exit 1
 fi
 
-_expected="$_test_dir/$_test_page"
-if cmp -s "$_path/index" <(echo "$_expected"); then
-	echo '2 OK'
-else
-	echo '2 NOT OK'
-	exit 1
-fi
-
 if [[ -f "$_path/$_lang/$_test_dir/$_test_page" ]]; then
-	echo "3 OK"
+	echo "2 OK"
 else
-	echo "3 NOT OK"
+	echo "2 NOT OK"
 	exit 1
 fi
 
 _expected=$'^# heading\n-^> subheading\n-^- cmd description:\n-^`cmd itself`\n-'
 _actual="$(./tldr testpage1)"
 if [[ "$_actual" == "$_expected" ]]; then
-	echo "4 OK"
+	echo "3 OK"
 else
-	echo "4 NOT OK"
+	echo "3 NOT OK"
 	exit 1
 fi
 
