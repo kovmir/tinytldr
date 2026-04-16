@@ -6,7 +6,7 @@ LIBNOTIFY_INCS = $(shell pkg-config --cflags libarchive libcurl)
 LIBS += $(LIBNOTIFY_LIBS)
 INCS += $(LIBNOTIFY_INCS)
 
-CFLAGS += -std=c99
+CFLAGS += -std=c23
 CFLAGS += -pedantic
 CFLAGS += -Wall
 CFLAGS += -Wextra
