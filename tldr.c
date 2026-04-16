@@ -194,9 +194,14 @@ extract_pages(void)
 				    src_path, strlen(src_path)))
 			break;
 
-		snprintf(dest_path, BUF_SIZE, "%s/%s%s",
-				getenv("HOME"), PAGES_PATH,
-				strchr(archive_entry_pathname(aep),'/'));
+		if (PAGES_PATH[0] == '~')
+			snprintf(dest_path, BUF_SIZE, "%s/%s%s",
+					getenv("HOME"), PAGES_PATH + 1,
+					strchr(archive_entry_pathname(aep),'/'));
+		else
+			snprintf(dest_path, BUF_SIZE, "%s%s",
+					PAGES_PATH,
+					strchr(archive_entry_pathname(aep),'/'));
 
 		archive_entry_set_pathname(aep, dest_path);
 		ares = archive_read_extract(ap, aep, 0);
@@ -217,8 +222,11 @@ index_pages(void)
 {
 	char buf[BUF_SIZE];
 
-	snprintf(buf, BUF_SIZE, "%s/%s/%s",
-		getenv("HOME"), PAGES_PATH, PAGES_LANG);
+	if (PAGES_PATH[0] == '~')
+		snprintf(buf, BUF_SIZE, "%s%s/%s",
+			getenv("HOME"), PAGES_PATH+1, PAGES_LANG);
+	else
+		snprintf(buf, BUF_SIZE, "%s/%s", PAGES_PATH, PAGES_LANG);
 
 	tldr_index = open_index("w");
 	nftw(buf, index_nftw_cb, 10, FTW_PHYS);
@@ -246,7 +254,10 @@ delete_pages(void)
 {
 	char buf[BUF_SIZE];
 
-	snprintf(buf, BUF_SIZE, "%s/%s", getenv("HOME"), PAGES_PATH);
+	if (PAGES_PATH[0] == '~')
+		snprintf(buf, BUF_SIZE, "%s%s", getenv("HOME"), PAGES_PATH+1);
+	else
+		strncpy(buf, PAGES_PATH, BUF_SIZE);
 	nftw(buf, delete_nftw_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
 
@@ -344,8 +355,13 @@ display_page(const char *page_name)
 		exit(1);
 	}
 
-	snprintf(buf, BUF_SIZE, "%s/%s/%s/%s",
-			getenv("HOME"), PAGES_PATH, PAGES_LANG, dest_path);
+	if (PAGES_PATH[0] == '~')
+		snprintf(buf, BUF_SIZE, "%s%s/%s/%s",
+				getenv("HOME"), PAGES_PATH+1, PAGES_LANG, dest_path);
+	else
+		snprintf(buf, BUF_SIZE, "%s/%s/%s",
+				PAGES_PATH, PAGES_LANG, dest_path);
+
 
 	page = fopen(buf, "r");
 	setup_console(); /* Enables VT100 processing in Win10 1503+ */
@@ -378,8 +394,13 @@ open_index(const char *mode)
 	char buf[BUF_SIZE];
 	FILE *fp;
 
-	snprintf(buf, BUF_SIZE, "%s/%s/%s",
-			getenv("HOME"), PAGES_PATH, "index");
+	if (PAGES_PATH[0] == '~')
+		snprintf(buf, BUF_SIZE, "%s%s/%s",
+				getenv("HOME"), PAGES_PATH+1, "index");
+	else
+		snprintf(buf, BUF_SIZE, "%s/%s", PAGES_PATH, "index");
+
+
 	fp = fopen(buf, mode);
 	if (!fp) {
 		fprintf(stderr, "failed to open index, run 'tldr -u'\n");
