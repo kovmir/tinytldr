@@ -54,8 +54,20 @@ static void  display_page(const char *dest_path);
 /* Opens index file performing all the necessary checking. */
 static FILE *open_index(const char *mode);
 
+#ifndef DEBUG
 /* Save locations, styling, and other settings are set via config.h. */
 #include "config.h"
+#else
+static const char *PAGES_URL = DEBUG_PAGES_URL;
+static const char *PAGES_DIR = DEBUG_PAGES_DIR;
+static const char *PAGES_PATH = DEBUG_PAGES_PATH;
+static const char *PAGES_LANG = DEBUG_PAGES_LANG;
+static const char *HEADING_STYLE = DEBUG_HEADING_STYLE;
+static const char *SUBHEADING_STYLE = DEBUG_SUBHEADING_STYLE;
+static const char *COMMAND_DESC_STYLE = DEBUG_COMMAND_DESC_STYLE;
+static const char *COMMAND_STYLE = DEBUG_COMMAND_STYLE;
+#endif
+
 /* Resets console styling back to default (usually white-on-black),
    and clears rest of current line for consistency on Windows. */
 static const char *RESET_STYLING = "\033[0m\033[0K";
@@ -118,7 +130,7 @@ fetch_pages(void)
 	CURLcode cres; /* cURL operation result. */
 	char err_curl[CURL_ERROR_SIZE]; /* Curl error message buffer. */
 	FILE *tldr_archive; /* File to download to. */
-	
+
 	if (getenv("TEMP") != NULL) /* Defined by Windows. */
 		strcpy(zip_path, getenv("TEMP"));
 	else if (getenv("TEMPDIR") != NULL) /* Can be defined by *nix users. */
@@ -127,7 +139,7 @@ fetch_pages(void)
 		strcpy(zip_path, "/tmp");
 	strcat(zip_path, "/tldr_pages.zip");
 	NULL_TERMINATE(zip_path, BUF_SIZE);
-	
+
 	/* Write in binary mode to avoid mangling with CRLFs in Windows. */
 	tldr_archive = fopen(zip_path, "wb");
 	if (!tldr_archive) {

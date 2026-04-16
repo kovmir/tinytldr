@@ -1,5 +1,3 @@
-/* See LICENSE file for copyright and license details. */
-
 /* URL to download the archive with man pages. */
 static const char *PAGES_URL = "https://codeload.github.com/tldr-pages/tldr/zip/main";
 /* Path to PAGES_LANG (see below) directory within the archive. */
@@ -19,7 +17,7 @@ static const char *PAGES_LANG = "pages";              /*  English */
 /* static const char *PAGES_LANG = "pages.ko"; */     /*   Korean */
 /* static const char *PAGES_LANG = "pages.pt_BR"; */  /* Portuguese: BR */
 /* static const char *PAGES_LANG = "pages.pt_PT"; */  /* Portuguese: PT */
-/* static const char *PAGES_LANG = "pages.ta"; */     /*   Tamil  */ 
+/* static const char *PAGES_LANG = "pages.ta"; */     /*   Tamil  */
 /* static const char *PAGES_LANG = "pages.zh"; */     /*  Chinese */
 
 /* Colors and styling. */

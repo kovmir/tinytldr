@@ -27,13 +27,33 @@ PROJECT = tldr
 INSTALL ?= install
 STRIP ?= strip
 
+# Config values for debug build.
+PAGES_URL = http://localhost:1337/archive.zip
+PAGES_DIR = tldrpages
+PAGES_PATH = ./debug_pages_dir
+PAGES_LANG = lang
+HEADING_STYLE = ^
+SUBHEADING_STYLE = ^
+COMMAND_DESC_STYLE = ^
+COMMAND_STYLE = ^
+
 build: CFLAGS += -DBUILD_TYPE=\"release\"
 build:
-	$(CC) $(CFLAGS) -O3 $(PROJECT).c $(LDFLAGS) -o $(PROJECT)
+	$(CC) -O2 $(CFLAGS) $(PROJECT).c $(LDFLAGS) -o $(PROJECT)
 
 debug: CFLAGS += -DBUILD_TYPE=\"debug\"
 debug:
-	$(CC) $(CFLAGS) -g $(PROJECT).c $(LDFLAGS) -o $(PROJECT)
+	$(CC) -O0 -g $(CFLAGS) \
+		-DDEBUG \
+		-DDEBUG_PAGES_URL=\"$(PAGES_URL)\" \
+		-DDEBUG_PAGES_DIR=\"$(PAGES_DIR)\" \
+		-DDEBUG_PAGES_PATH=\"$(PAGES_PATH)\" \
+		-DDEBUG_PAGES_LANG=\"$(PAGES_LANG)\" \
+		-DDEBUG_HEADING_STYLE=\"$(HEADING_STYLE)\" \
+		-DDEBUG_SUBHEADING_STYLE=\"$(SUBHEADING_STYLE)\" \
+		-DDEBUG_COMMAND_DESC_STYLE=\"$(COMMAND_DESC_STYLE)\" \
+		-DDEBUG_COMMAND_STYLE=\"$(COMMAND_STYLE)\" \
+		$(PROJECT).c $(LDFLAGS) -o $(PROJECT)
 
 gdb: debug
 	gdb ./$(PROJECT)
