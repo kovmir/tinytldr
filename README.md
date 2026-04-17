@@ -2,7 +2,7 @@
 
 [![tinytldr status](https://builds.sr.ht/~kovmir/tinytldr.svg)](https://builds.sr.ht/~kovmir/tinytldr?)
 
-Minimalist [tldr][1] command line client, written in plain C99.
+Minimalist [tldr][1] command line client, written in plain C.
 
 # PREVIEW
 
