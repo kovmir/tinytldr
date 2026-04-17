@@ -64,8 +64,6 @@ static void restore_console(void);
 static void display_page(const char *dest_path);
 /* Opens index file performing all the necessary checking. */
 static FILE *open_index(const char *mode);
-/* Return true if *str ends with *suffix.  */
-static bool string_ends_with(const char *str, const char *suffix);
 
 #ifndef DEBUG
 /* Save locations, styling, and other settings are set via config.h. */
@@ -316,16 +314,25 @@ char *
 find_page(const char *page_name)
 {
 	static char index_entry[BUF_SIZE];
-	char match[strlen(page_name)+6]; /* for '/<page_name>.md\n\0' */
+	char match[strlen(page_name)+5]; /* for '.md\n\0' */
 
-	snprintf(match, BUF_SIZE, "/%s.md\n", page_name);
+	snprintf(match, BUF_SIZE, "%s.md\n", page_name);
 
 	tldr_index = open_index("r");
 	while(fgets(index_entry, BUF_SIZE, tldr_index)) {
-		if (string_ends_with(index_entry, match) == true) {
-			*strchr(index_entry, '\n') = 0;
-			fclose(tldr_index);
-			return index_entry;
+		/* page_name is either 'command' or 'platform/command'. */
+		if (strchr(page_name, '/')) { /* platform/command */
+			if(strcmp(match, index_entry) == 0) {
+				*strchr(index_entry, '\n') = 0;
+				fclose(tldr_index);
+				return index_entry;
+			}
+		} else { /* command */
+			if (strcmp(match, strchr(index_entry, '/')+1) == 0) {
+				*strchr(index_entry, '\n') = 0;
+				fclose(tldr_index);
+				return index_entry;
+			}
 		}
 	}
 	fclose(tldr_index);
@@ -421,19 +428,6 @@ open_index(const char *mode)
 	if (fp == NULL)
 		err(1, "failed to open index, probably run `tldr -u`\n");
 	return fp;
-}
-
-bool
-string_ends_with(const char *str, const char *suffix) {
-	size_t str_len = strlen(str);
-	size_t suffix_len = strlen(suffix);
-
-	if (!str || !suffix)
-		return false;
-	if (suffix_len > str_len)
-		return false;
-
-	return strncmp(str + str_len - suffix_len, suffix, suffix_len) == 0;
 }
 
 int
