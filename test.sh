@@ -55,13 +55,20 @@ else
 	echo '3 NOT OK'
 	exit 1
 fi
-
-_expected="$_test_dir/$_test_page"
-_actual="$(./tldr -l)"
+_actual="$(./tldr common/testpage1)"
 if [[ "$_actual" == "$_expected" ]]; then
 	echo '4 OK'
 else
 	echo '4 NOT OK'
+	exit 1
+fi
+
+_expected="$_test_dir/$_test_page"
+_actual="$(./tldr -l)"
+if [[ "$_actual" == "$_expected" ]]; then
+	echo '5 OK'
+else
+	echo '5 NOT OK'
 	exit 1
 fi
 
