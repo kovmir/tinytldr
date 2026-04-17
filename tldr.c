@@ -23,6 +23,17 @@
 #define D_NAME entry->d_name
 #define ENABLE_WIN_VT100_OUT 7
 #define NULL_TERMINATE(arr, size) (arr[(size)-1] = 0)
+#define STRCPY_TMP_DIR(buf) \
+	do { \
+		const char *temp = getenv("TEMP"); \
+		if (temp != NULL) \
+			strcpy(buf, temp); \
+		else if ((temp = getenv("TEMPDIR")) != NULL) \
+			strcpy(buf, temp); \
+		else \
+			strcpy(buf, "/tmp"); \
+	} while(0)
+
 
 /* Function prototypes */
 /* Prints instructions on how to use the program. */
@@ -77,8 +88,6 @@ static const char *RESET_STYLING = "-";
 #endif /* DEBUG */
 /* Index file to hold available page names. */
 static FILE *tldr_index;
-/* Path to download the tldr archive to. */
-static char zip_path[BUF_SIZE];
 
 inline void
 print_usage(void)
@@ -134,13 +143,9 @@ fetch_pages(void)
 	CURLcode curl_res; /* cURL operation result. */
 	char curl_err[CURL_ERROR_SIZE]; /* Curl error message buffer. */
 	FILE *tldr_archive; /* Downloaded file. */
+	char zip_path[BUF_SIZE]; /* Downloaded archive path. */
 
-	if (getenv("TEMP") != NULL) /* Defined by Windows. */
-		strcpy(zip_path, getenv("TEMP"));
-	else if (getenv("TEMPDIR") != NULL) /* Can be defined by *nix users. */
-		strcpy(zip_path, getenv("TEMPDIR"));
-	else  /* If neither defined, presume default *nix tmp path. */
-		strcpy(zip_path, "/tmp");
+	STRCPY_TMP_DIR(zip_path);
 	strcat(zip_path, "/tldr_pages.zip");
 	NULL_TERMINATE(zip_path, BUF_SIZE);
 
@@ -170,10 +175,15 @@ extract_pages(void)
 {
 	char src_path[BUF_SIZE]; /* Path within archive to extract from. */
 	char dest_path[BUF_SIZE]; /* Save the extracted pages here. */
+	char zip_path[BUF_SIZE]; /* Downloaded archive path. */
 	FILE *tldr_archive; /* Pointer to downloaded zip file. */
 	int liba_res; /* libarchive result. */
 	struct archive *archp;
 	struct archive_entry *entryp;
+
+	STRCPY_TMP_DIR(zip_path);
+	strcat(zip_path, "/tldr_pages.zip");
+	NULL_TERMINATE(zip_path, BUF_SIZE);
 
 	tldr_archive = fopen(zip_path, "r");
 	if (tldr_archive == NULL)
@@ -223,7 +233,7 @@ extract_pages(void)
 	}
 	archive_read_free(archp);
 	fclose(tldr_archive);
-	remove(zip_path);
+	//remove(zip_path);
 }
 
 void
