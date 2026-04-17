@@ -426,7 +426,7 @@ open_index(const char *mode)
 
 	fp = fopen(path, mode);
 	if (fp == NULL)
-		err(1, "failed to open index, probably run `tldr -u`\n");
+		err(1, "failed to open index, probably run `tldr -u`");
 	return fp;
 }
 
