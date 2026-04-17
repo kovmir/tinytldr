@@ -10,13 +10,13 @@ _path=$3
 _lang=$4
 
 _test_dir='common'
-_test_page='testpage1.md'
+_test_page='testpage1'
 # Simulate pages archive.
 mkdir -p "$_dir/$_lang/$_test_dir"
 mkdir -p "$_dir/some_crap_inside"
 echo 'blah' > "$_dir/some_crap_inside/crap.txt"
 echo 'ouch' > "$_dir/some_crap_inside/sumthin.txt"
-cat <<EOF > "$_dir/$_lang/$_test_dir/$_test_page"
+cat <<EOF > "$_dir/$_lang/$_test_dir/$_test_page.md"
 # heading
 
 > subheading
@@ -40,7 +40,7 @@ else
 	exit 1
 fi
 
-if [[ -f "$_path/$_lang/$_test_dir/$_test_page" ]]; then
+if [[ -f "$_path/$_lang/$_test_dir/$_test_page.md" ]]; then
 	echo '2 OK'
 else
 	echo '2 NOT OK'
@@ -48,14 +48,14 @@ else
 fi
 
 _expected=$'^# heading\n-^> subheading\n-^- cmd description:\n-^`cmd itself`\n-'
-_actual="$(./tldr testpage1)"
+_actual="$(./tldr "$_test_page")"
 if [[ "$_actual" == "$_expected" ]]; then
 	echo '3 OK'
 else
 	echo '3 NOT OK'
 	exit 1
 fi
-_actual="$(./tldr common/testpage1)"
+_actual="$(./tldr "$_test_dir/$_test_page")"
 if [[ "$_actual" == "$_expected" ]]; then
 	echo '4 OK'
 else
@@ -63,7 +63,7 @@ else
 	exit 1
 fi
 
-_expected="$_test_dir/$_test_page"
+_expected="$_test_dir/$_test_page.md"
 _actual="$(./tldr -l)"
 if [[ "$_actual" == "$_expected" ]]; then
 	echo '5 OK'
