@@ -4,7 +4,6 @@
 /* Includes */
 #include <dirent.h>
 #include <err.h>
-#include <errno.h>
 #include <ftw.h>
 #include <getopt.h>
 #include <stdio.h>
@@ -86,7 +85,8 @@ static const char *RESET_STYLING = "\033[0m\033[0K";
 #else
 static const char *RESET_STYLING = "-";
 #endif /* DEBUG */
-/* Index file to hold available page names. */
+/* Index file to hold available page names.
+ * This one is global because I pass it to ftw(3) callbacks. */
 static FILE *tldr_index;
 
 inline void
