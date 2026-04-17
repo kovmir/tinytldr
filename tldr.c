@@ -3,6 +3,7 @@
 
 /* Includes */
 #include <dirent.h>
+#include <stdbool.h>
 #include <err.h>
 #include <ftw.h>
 #include <getopt.h>
@@ -36,33 +37,35 @@
 
 /* Function prototypes */
 /* Prints instructions on how to use the program. */
-static void  print_usage(void);
+static void print_usage(void);
 /* Print the contents of 'config.h'. */
-static void  print_config(void);
+static void print_config(void);
 /* Downloads pages. */
-static void  fetch_pages(void);
+static void fetch_pages(void);
 /* Extracts pages and put them in place. */
-static void  extract_pages(void);
+static void extract_pages(void);
 /* Creates index file of all pages. */
-static void  index_pages(void);
-static int   index_nftw_cb(const char *path, const struct stat *sb,
+static void index_pages(void);
+static int index_nftw_cb(const char *path, const struct stat *sb,
 				int typeflag, struct FTW *ftwbuf);
 /* Delete all pages from disk. */
-static void  delete_pages(void);
-static int   delete_nftw_cb(const char *path, const struct stat *sb,
+static void delete_pages(void);
+static int delete_nftw_cb(const char *path, const struct stat *sb,
 				int typeflag, struct FTW *ftwbuf);
 /* Prints all page names. */
-static void  list_pages(void);
+static void list_pages(void);
 /* Returns a file path to a given page. */
 static char *find_page(const char *page_name);
 /* Enables VT100 mode on Win10 1503+ ConHost & wt+mintty; else, empty. */
-static void  setup_console(void);
+static void setup_console(void);
 /* Restores previous mode on Win10 1503+ ConHost & wt+mintty; else, empty. */
-static void  restore_console(void);
+static void restore_console(void);
 /* Prints a given page. */
-static void  display_page(const char *dest_path);
+static void display_page(const char *dest_path);
 /* Opens index file performing all the necessary checking. */
 static FILE *open_index(const char *mode);
+/* Return true if *str ends with *suffix.  */
+static bool string_ends_with(const char *str, const char *suffix);
 
 #ifndef DEBUG
 /* Save locations, styling, and other settings are set via config.h. */
@@ -139,24 +142,25 @@ print_config(void)
 void
 fetch_pages(void)
 {
-	CURL *curl_handle; /* cURL easy handle. */
-	CURLcode curl_res; /* cURL operation result. */
-	char curl_err[CURL_ERROR_SIZE]; /* Curl error message buffer. */
-	FILE *tldr_archive; /* Downloaded file. */
+	CURL    *curl_handle;
+	CURLcode curl_res;                  /* Curl operation result. */
+	char     curl_err[CURL_ERROR_SIZE]; /* Curl error message buffer. */
+
 	char zip_path[BUF_SIZE]; /* Downloaded archive path. */
+	FILE *zip;               /* Downloaded archive. */
 
 	STRCPY_TMP_DIR(zip_path);
 	strcat(zip_path, "/tldr_pages.zip");
 	NULL_TERMINATE(zip_path, BUF_SIZE);
 
 	/* Write in binary mode to avoid mangling with CRLFs in Windows. */
-	tldr_archive = fopen(zip_path, "wb");
-	if (tldr_archive == NULL)
+	zip = fopen(zip_path, "wb");
+	if (zip == NULL)
 		err(1, "failed to open %s", zip_path);
 
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl_handle = curl_easy_init();
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, tldr_archive);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, zip);
 	curl_easy_setopt(curl_handle, CURLOPT_URL, PAGES_URL);
 	curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, curl_err);
 
@@ -164,7 +168,7 @@ fetch_pages(void)
 
 	curl_easy_cleanup(curl_handle);
 	curl_global_cleanup();
-	fclose(tldr_archive);
+	fclose(zip);
 
 	if (curl_res != CURLE_OK)
 		errx(1, "failed to fetch pages: %s", curl_err);
@@ -173,12 +177,13 @@ fetch_pages(void)
 void
 extract_pages(void)
 {
-	char src_path[BUF_SIZE]; /* Path within archive to extract from. */
-	char dest_path[BUF_SIZE]; /* Save the extracted pages here. */
-	char zip_path[BUF_SIZE]; /* Downloaded archive path. */
-	FILE *tldr_archive; /* Pointer to downloaded zip file. */
-	int liba_res; /* libarchive result. */
-	struct archive *archp;
+	FILE *tldr_archive;        /* Downloaded pages archive. */
+	char  src_path[BUF_SIZE];  /* Path within archive to extract from. */
+	char  dest_path[BUF_SIZE]; /* Save the extracted pages here. */
+	char  zip_path[BUF_SIZE];  /* Downloaded archive path. */
+
+	int                   ares; /* libarchive function results. */
+	struct archive       *archp;
 	struct archive_entry *entryp;
 
 	STRCPY_TMP_DIR(zip_path);
@@ -195,10 +200,10 @@ extract_pages(void)
 
 	archive_read_support_format_zip(archp);
 
-	liba_res = archive_read_open_FILE(archp, tldr_archive);
-	if (liba_res != ARCHIVE_OK) {
+	ares = archive_read_open_FILE(archp, tldr_archive);
+	if (ares != ARCHIVE_OK) {
 		errx(1, "failed to archive_read_open_FILE(): %s",
-		    archive_error_string(archp));
+		     archive_error_string(archp));
 	}
 
 	snprintf(src_path, BUF_SIZE, "%s/%s/", PAGES_DIR, PAGES_LANG);
@@ -210,46 +215,46 @@ extract_pages(void)
 	}
 	while (archive_read_next_header(archp, &entryp) != ARCHIVE_EOF) {
 		if (strncmp(archive_entry_pathname(entryp), src_path,
-				strlen(src_path)) != 0) {
+			    strlen(src_path)) != 0) {
 			break; /* Done processing the pages directory. */
 		}
 
 		if (PAGES_PATH[0] == '~') {
 			snprintf(dest_path, BUF_SIZE, "%s/%s/%s",
-				getenv("HOME"), PAGES_PATH+2,
-				strchr(archive_entry_pathname(entryp),'/')+1);
+			         getenv("HOME"), PAGES_PATH+2,
+			         strchr(archive_entry_pathname(entryp),'/')+1);
 		} else {
 			snprintf(dest_path, BUF_SIZE, "%s/%s",
-				PAGES_PATH,
-				strchr(archive_entry_pathname(entryp),'/')+1);
+			         PAGES_PATH,
+			         strchr(archive_entry_pathname(entryp),'/')+1);
 		}
 
 		archive_entry_set_pathname(entryp, dest_path);
-		liba_res = archive_read_extract(archp, entryp, 0);
-		if (liba_res != ARCHIVE_OK) {
+		ares = archive_read_extract(archp, entryp, 0);
+		if (ares != ARCHIVE_OK) {
 			errx(1, "failed to archive_read_extract(): %s",
 				archive_error_string(archp));
 		}
 	}
 	archive_read_free(archp);
 	fclose(tldr_archive);
-	//remove(zip_path);
+	remove(zip_path);
 }
 
 void
 index_pages(void)
 {
-	char buf[BUF_SIZE];
+	char path[BUF_SIZE];
 
 	if (PAGES_PATH[0] == '~') {
-		snprintf(buf, BUF_SIZE, "%s/%s/%s",
-			getenv("HOME"), PAGES_PATH+2, PAGES_LANG);
+		snprintf(path, BUF_SIZE, "%s/%s/%s",
+		         getenv("HOME"), PAGES_PATH+2, PAGES_LANG);
 	} else {
-		snprintf(buf, BUF_SIZE, "%s/%s", PAGES_PATH, PAGES_LANG);
+		snprintf(path, BUF_SIZE, "%s/%s", PAGES_PATH, PAGES_LANG);
 	}
 
 	tldr_index = open_index("w");
-	nftw(buf, index_nftw_cb, 10, FTW_PHYS);
+	nftw(path, index_nftw_cb, 10, FTW_PHYS);
 	fclose(tldr_index);
 }
 
@@ -265,20 +270,22 @@ index_nftw_cb(const char *path, const struct stat *sb,
 
 	/* Truncate the full path to include only the filename and last dir. */
 	fprintf(tldr_index, "%s\n",
-			strchr(strstr(path, PAGES_LANG)+1, '/')+1);
+	        strchr(strstr(path, PAGES_LANG)+1, '/')+1);
 	return 0;
 }
 
 void
 delete_pages(void)
 {
-	char buf[BUF_SIZE];
+	char path[BUF_SIZE];
 
-	if (PAGES_PATH[0] == '~')
-		snprintf(buf, BUF_SIZE, "%s/%s", getenv("HOME"), PAGES_PATH+2);
-	else
-		strncpy(buf, PAGES_PATH, BUF_SIZE);
-	nftw(buf, delete_nftw_cb, 64, FTW_DEPTH | FTW_PHYS);
+	if (PAGES_PATH[0] == '~') {
+		snprintf(path, BUF_SIZE, "%s/%s",
+		         getenv("HOME"), PAGES_PATH+2);
+	} else {
+		strncpy(path, PAGES_PATH, BUF_SIZE);
+	}
+	nftw(path, delete_nftw_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
 
 int
@@ -308,25 +315,17 @@ list_pages(void)
 char *
 find_page(const char *page_name)
 {
-	static char buf[BUF_SIZE];
-	char page_filename[strlen(page_name)+5]; /* for '.md\n\0' */
+	static char index_entry[BUF_SIZE];
+	char match[strlen(page_name)+6]; /* for '/<page_name>.md\n\0' */
+
+	snprintf(match, BUF_SIZE, "/%s.md\n", page_name);
 
 	tldr_index = open_index("r");
-	snprintf(page_filename, BUF_SIZE, "%s.md\n", page_name);
-	while(fgets(buf, BUF_SIZE, tldr_index)) {
-		/* page_name is either 'command' or 'platform/command'. */
-		if (strchr(page_name, '/')) { /* platform/command */
-			if(strcmp(page_filename, buf) == 0) {
-				*strchr(buf, '\n') = 0;
-				fclose(tldr_index);
-				return buf;
-			}
-		} else { /* command */
-			if (!strcmp(page_filename, strchr(buf, '/')+1)) {
-				*strchr(buf, '\n') = 0;
-				fclose(tldr_index);
-				return buf;
-			}
+	while(fgets(index_entry, BUF_SIZE, tldr_index)) {
+		if (string_ends_with(index_entry, match) == true) {
+			*strchr(index_entry, '\n') = 0;
+			fclose(tldr_index);
+			return index_entry;
 		}
 	}
 	fclose(tldr_index);
@@ -359,43 +358,45 @@ void restore_console(void){}
 void
 display_page(const char *page_name)
 {
-	char buf[BUF_SIZE];
-	char *dest_path;
+	char *index_entry; /* category/filename.md */
+	char  page_path[BUF_SIZE];
 	FILE *page;
 
-	dest_path = find_page(page_name);
-	if (!dest_path)
+	index_entry = find_page(page_name);
+	if (index_entry == NULL)
 		errx(1, "%s has not been found", page_name);
 
 	if (PAGES_PATH[0] == '~') {
-		snprintf(buf, BUF_SIZE, "%s/%s/%s/%s",
-			getenv("HOME"), PAGES_PATH+2, PAGES_LANG, dest_path);
+		snprintf(page_path, BUF_SIZE, "%s/%s/%s/%s", getenv("HOME"),
+		         PAGES_PATH+2, PAGES_LANG, index_entry);
 	} else {
-		snprintf(buf, BUF_SIZE, "%s/%s/%s",
-			PAGES_PATH, PAGES_LANG, dest_path);
+		snprintf(page_path, BUF_SIZE, "%s/%s/%s",
+		         PAGES_PATH, PAGES_LANG, index_entry);
 	}
 
-	page = fopen(buf, "r");
+	page = fopen(page_path, "r");
+	if (page == NULL)
+		err(1, "cannot open %s", page_path);
 	setup_console(); /* Enables VT100 processing in Win10 1503+ */
-	while (fgets(buf, BUF_SIZE, page)) {
-		if (strcmp(buf, "\n") == 0) {
+	while (fgets(page_path, BUF_SIZE, page)) {
+		if (strcmp(page_path, "\n") == 0) {
 			continue; /* Skip empty lines. */
 		}
-		if (buf[0] == '#') {
+		if (page_path[0] == '#') {
 			printf("%s%s%s",
-				HEADING_STYLE, buf, RESET_STYLING);
+			       HEADING_STYLE, page_path, RESET_STYLING);
 		}
-		if (buf[0] == '>') {
+		if (page_path[0] == '>') {
 			printf("%s%s%s",
-				SUBHEADING_STYLE, buf, RESET_STYLING);
+			       SUBHEADING_STYLE, page_path, RESET_STYLING);
 		}
-		if (buf[0] == '-') {
+		if (page_path[0] == '-') {
 			printf("%s%s%s",
-				COMMAND_DESC_STYLE, buf, RESET_STYLING);
+			       COMMAND_DESC_STYLE, page_path, RESET_STYLING);
 		}
-		if (buf[0] == '`') {
+		if (page_path[0] == '`') {
 			printf("%s%s%s",
-				COMMAND_STYLE, buf, RESET_STYLING);
+			       COMMAND_STYLE, page_path, RESET_STYLING);
 		}
 
 	}
@@ -406,20 +407,33 @@ display_page(const char *page_name)
 FILE *
 open_index(const char *mode)
 {
-	char buf[BUF_SIZE];
+	char  path[BUF_SIZE];
 	FILE *fp;
 
 	if (PAGES_PATH[0] == '~') {
-		snprintf(buf, BUF_SIZE, "%s/%s/%s",
-				getenv("HOME"), PAGES_PATH+2, "index");
+		snprintf(path, BUF_SIZE, "%s/%s/%s",
+		         getenv("HOME"), PAGES_PATH+2, "index");
 	} else {
-		snprintf(buf, BUF_SIZE, "%s/%s", PAGES_PATH, "index");
+		snprintf(path, BUF_SIZE, "%s/%s", PAGES_PATH, "index");
 	}
 
-	fp = fopen(buf, mode);
+	fp = fopen(path, mode);
 	if (fp == NULL)
 		err(1, "failed to open index, probably run `tldr -u`\n");
 	return fp;
+}
+
+bool
+string_ends_with(const char *str, const char *suffix) {
+	size_t str_len = strlen(str);
+	size_t suffix_len = strlen(suffix);
+
+	if (!str || !suffix)
+		return false;
+	if (suffix_len > str_len)
+		return false;
+
+	return strncmp(str + str_len - suffix_len, suffix, suffix_len) == 0;
 }
 
 int
