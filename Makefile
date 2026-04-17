@@ -30,7 +30,7 @@ STRIP ?= strip
 # Config values for debug build.
 PAGES_URL = http://localhost:1337/archive.zip
 PAGES_DIR = to_be_archived_tldrpages
-PAGES_PATH = ./tldrpages_extracted
+PAGES_PATH = ./extracted_tldrpages
 PAGES_LANG = lang
 HEADING_STYLE = ^
 SUBHEADING_STYLE = ^
