@@ -69,6 +69,7 @@ static FILE *open_index(const char *mode);
 /* Save locations, styling, and other settings are set via config.h. */
 #include "config.h"
 #else
+/* Code under DEBUGs is for unit testing. */
 static const char *PAGES_URL = DEBUG_PAGES_URL;
 static const char *PAGES_DIR = DEBUG_PAGES_DIR;
 static const char *PAGES_PATH = DEBUG_PAGES_PATH;
