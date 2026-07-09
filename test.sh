@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Unit tests for tinytldr
 # Usage: see Makefile
+if [[ "$#" == 0 ]]; then
+	echo 'Run `make test`; do not invoke this script directly.'
+	exit 1
+fi
 
 set -e
 
