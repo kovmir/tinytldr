@@ -365,7 +365,7 @@ void
 display_page(const char *page_name)
 {
 	char *index_entry; /* category/filename.md */
-	char  page_path[BUF_SIZE];
+	char  buf[BUF_SIZE];
 	FILE *page;
 
 	index_entry = find_page(page_name);
@@ -373,36 +373,36 @@ display_page(const char *page_name)
 		errx(1, "%s has not been found", page_name);
 
 	if (PAGES_PATH[0] == '~') {
-		snprintf(page_path, BUF_SIZE, "%s/%s/%s/%s", getenv("HOME"),
+		snprintf(buf, BUF_SIZE, "%s/%s/%s/%s", getenv("HOME"),
 		         PAGES_PATH+2, PAGES_LANG, index_entry);
 	} else {
-		snprintf(page_path, BUF_SIZE, "%s/%s/%s",
+		snprintf(buf, BUF_SIZE, "%s/%s/%s",
 		         PAGES_PATH, PAGES_LANG, index_entry);
 	}
 
-	page = fopen(page_path, "r");
+	page = fopen(buf, "r");
 	if (page == NULL)
-		err(1, "cannot open %s", page_path);
+		err(1, "cannot open %s", buf);
 	setup_console(); /* Enables VT100 processing in Win10 1503+ */
-	while (fgets(page_path, BUF_SIZE, page)) {
-		if (strcmp(page_path, "\n") == 0) {
+	while (fgets(buf, BUF_SIZE, page)) {
+		if (strcmp(buf, "\n") == 0) {
 			continue; /* Skip empty lines. */
 		}
-		if (page_path[0] == '#') {
+		if (buf[0] == '#') {
 			printf("%s%s%s",
-			       HEADING_STYLE, page_path, RESET_STYLING);
+			       HEADING_STYLE, buf, RESET_STYLING);
 		}
-		if (page_path[0] == '>') {
+		if (buf[0] == '>') {
 			printf("%s%s%s",
-			       SUBHEADING_STYLE, page_path, RESET_STYLING);
+			       SUBHEADING_STYLE, buf, RESET_STYLING);
 		}
-		if (page_path[0] == '-') {
+		if (buf[0] == '-') {
 			printf("%s%s%s",
-			       COMMAND_DESC_STYLE, page_path, RESET_STYLING);
+			       COMMAND_DESC_STYLE, buf, RESET_STYLING);
 		}
-		if (page_path[0] == '`') {
+		if (buf[0] == '`') {
 			printf("%s%s%s",
-			       COMMAND_STYLE, page_path, RESET_STYLING);
+			       COMMAND_STYLE, buf, RESET_STYLING);
 		}
 
 	}
