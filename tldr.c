@@ -22,7 +22,6 @@
 #define BUF_SIZE 4096
 #define D_NAME entry->d_name
 #define ENABLE_WIN_VT100_OUT 7
-#define NULL_TERMINATE(arr, size) (arr[(size)-1] = 0)
 #define STRNCPY_TMP_DIR(buf) \
 	do { \
 		if (getenv("TEMP") != NULL) \
@@ -149,7 +148,7 @@ fetch_pages(void)
 
 	STRNCPY_TMP_DIR(zip_path);
 	strcat(zip_path, "/tldr_pages.zip");
-	NULL_TERMINATE(zip_path, BUF_SIZE);
+	zip_path[BUF_SIZE-1] = 0;
 
 	/* Write in binary mode to avoid mangling with CRLFs in Windows. */
 	zip = fopen(zip_path, "wb");
@@ -186,7 +185,7 @@ extract_pages(void)
 
 	STRNCPY_TMP_DIR(zip_path);
 	strcat(zip_path, "/tldr_pages.zip");
-	NULL_TERMINATE(zip_path, BUF_SIZE);
+	zip_path[BUF_SIZE-1] = 0;
 
 	tldr_archive = fopen(zip_path, "r");
 	if (tldr_archive == NULL)
