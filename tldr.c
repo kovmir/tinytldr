@@ -23,15 +23,14 @@
 #define D_NAME entry->d_name
 #define ENABLE_WIN_VT100_OUT 7
 #define NULL_TERMINATE(arr, size) (arr[(size)-1] = 0)
-#define STRCPY_TMP_DIR(buf) \
+#define STRNCPY_TMP_DIR(buf) \
 	do { \
-		const char *temp = getenv("TEMP"); \
-		if (temp != NULL) \
-			strcpy(buf, temp); \
-		else if ((temp = getenv("TEMPDIR")) != NULL) \
-			strcpy(buf, temp); \
+		if (getenv("TEMP") != NULL) \
+			strncpy(buf, getenv("TEMP"), BUF_SIZE); \
+		else if (getenv("TEMPDIR") != NULL) \
+			strncpy(buf, getenv("TEMPDIR"), BUF_SIZE); \
 		else \
-			strcpy(buf, "/tmp"); \
+			strncpy(buf, "/tmp", BUF_SIZE); \
 	} while(0)
 
 
@@ -148,7 +147,7 @@ fetch_pages(void)
 	char zip_path[BUF_SIZE]; /* Downloaded archive path. */
 	FILE *zip;               /* Downloaded archive. */
 
-	STRCPY_TMP_DIR(zip_path);
+	STRNCPY_TMP_DIR(zip_path);
 	strcat(zip_path, "/tldr_pages.zip");
 	NULL_TERMINATE(zip_path, BUF_SIZE);
 
@@ -185,7 +184,7 @@ extract_pages(void)
 	struct archive       *archp;
 	struct archive_entry *entryp;
 
-	STRCPY_TMP_DIR(zip_path);
+	STRNCPY_TMP_DIR(zip_path);
 	strcat(zip_path, "/tldr_pages.zip");
 	NULL_TERMINATE(zip_path, BUF_SIZE);
 
