@@ -22,12 +22,12 @@
 #define BUF_SIZE 4096
 #define D_NAME entry->d_name
 #define ENABLE_WIN_VT100_OUT 7
-#define STRNCPY_TMP_DIR(buf) \
+#define STRNCPY_TMP_DIR(buf, size) \
 	do { \
 		if (getenv("TEMP") != NULL) \
-			strncpy(buf, getenv("TEMP"), BUF_SIZE); \
+			strncpy(buf, getenv("TEMP"), size-1); \
 		else if (getenv("TEMPDIR") != NULL) \
-			strncpy(buf, getenv("TEMPDIR"), BUF_SIZE); \
+			strncpy(buf, getenv("TEMPDIR"), size-1); \
 		else \
 			strncpy(buf, "/tmp", BUF_SIZE); \
 	} while(0)
@@ -146,7 +146,7 @@ fetch_pages(void)
 	char zip_path[BUF_SIZE]; /* Downloaded archive path. */
 	FILE *zip;               /* Downloaded archive. */
 
-	STRNCPY_TMP_DIR(zip_path);
+	STRNCPY_TMP_DIR(zip_path, BUF_SIZE);
 	strcat(zip_path, "/tldr_pages.zip");
 	zip_path[BUF_SIZE-1] = 0;
 
@@ -183,7 +183,7 @@ extract_pages(void)
 	struct archive       *archp;
 	struct archive_entry *entryp;
 
-	STRNCPY_TMP_DIR(zip_path);
+	STRNCPY_TMP_DIR(zip_path, BUF_SIZE);
 	strcat(zip_path, "/tldr_pages.zip");
 	zip_path[BUF_SIZE-1] = 0;
 
