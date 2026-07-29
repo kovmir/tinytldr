@@ -2,6 +2,7 @@
  * Copyright (c) 2026 Ivan Kovmir */
 
 /* Includes */
+#include <assert.h>
 #include <dirent.h>
 #include <stdbool.h>
 #include <err.h>
@@ -126,6 +127,8 @@ fetch_pages(FILE *temp_file)
 	CURLcode curl_res;                  /* Curl operation result. */
 	char     curl_err[CURL_ERROR_SIZE]; /* Curl error message buffer. */
 
+	assert(temp_file != NULL);
+
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl_handle = curl_easy_init();
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, temp_file);
@@ -149,6 +152,8 @@ extract_pages(FILE *temp_file)
 	int                   ares; /* libarchive function results. */
 	struct archive       *archp;
 	struct archive_entry *entryp;
+
+	assert(temp_file != NULL);
 
 	rewind(temp_file); /* Rewind after download. */
 
@@ -278,6 +283,9 @@ find_page(const char *page_name)
 
 	tldr_index = open_index("r");
 	while(fgets(index_entry, BUF_SIZE, tldr_index)) {
+		/* Index entries must be of the form platform/command. */
+		assert(strstr(index_entry, "/") != NULL);
+
 		/* page_name is either 'command' or 'platform/command'. */
 		if (strchr(page_name, '/')) { /* platform/command */
 			if(strncmp(match, index_entry, BUF_SIZE) == 0) {
@@ -305,6 +313,8 @@ display_page(const char *page_name)
 	char *index_entry; /* category/filename.md */
 	char  buf[BUF_SIZE];
 	FILE *page;
+
+	assert(page_name != NULL);
 
 	index_entry = find_page(page_name);
 	if (index_entry == NULL)
@@ -352,6 +362,8 @@ open_index(const char *mode)
 	char  path[BUF_SIZE];
 	FILE *fp;
 
+	assert(mode != NULL);
+
 	if (PAGES_PATH[0] == '~') {
 		snprintf(path, BUF_SIZE, "%s/%s/%s",
 		         getenv("HOME"), PAGES_PATH+2, "index");
@@ -370,6 +382,12 @@ main(int argc, char *argv[])
 {
 	int opt;
 	FILE *temp_file;
+
+	/* Paths like ~foo/bar are invalid. */
+	if (PAGES_PATH[0] == '~')
+		assert(PAGES_PATH[1] == '/');
+	/* In certain environments HOME may not be available. */
+	assert(getenv("HOME") != NULL);
 
 	while ((opt = getopt(argc, argv, "udilhcv")) != -1) {
 		switch (opt) {
