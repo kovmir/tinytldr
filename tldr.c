@@ -280,13 +280,15 @@ find_page(const char *page_name)
 	while(fgets(index_entry, BUF_SIZE, tldr_index)) {
 		/* page_name is either 'command' or 'platform/command'. */
 		if (strchr(page_name, '/')) { /* platform/command */
-			if(strcmp(match, index_entry) == 0) {
+			if(strncmp(match, index_entry, BUF_SIZE) == 0) {
 				*strchr(index_entry, '\n') = 0;
 				fclose(tldr_index);
 				return index_entry;
 			}
 		} else { /* command */
-			if (strcmp(match, strchr(index_entry, '/')+1) == 0) {
+			if (strncmp(match,
+				    strchr(index_entry, '/')+1,
+				    BUF_SIZE) == 0) {
 				*strchr(index_entry, '\n') = 0;
 				fclose(tldr_index);
 				return index_entry;
