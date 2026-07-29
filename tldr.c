@@ -272,7 +272,7 @@ char *
 find_page(const char *page_name)
 {
 	static char index_entry[BUF_SIZE];
-	char match[strlen(page_name)+5]; /* for '.md\n\0' */
+	char match[BUF_SIZE];
 
 	snprintf(match, BUF_SIZE, "%s.md\n", page_name);
 
