@@ -50,7 +50,6 @@ the minimalist approach of this project.
 
 * Linux
 * BSD
-* M$ Windows
 
 # FAQ
 
@@ -68,7 +67,7 @@ tldr testpage
 
 # CREDITS
 
-Thanks [@bilditup1](https://github.com/bilditup1) for Windows support.
+Thanks [@bilditup1](https://github.com/bilditup1) for code contributions.
 
 # CONTRIBUTING
 

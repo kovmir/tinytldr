@@ -11,8 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* cURL must be included before libarchive in order to avoid a compiler
- * warning on Windows regarding the Winsock2 library. */
+/* cURL */
 #include <curl/curl.h>
 /* libarchive */
 #include <archive.h>
@@ -20,7 +19,6 @@
 
 /* Constants and Macros */
 #define BUF_SIZE 4096
-#define ENABLE_WIN_VT100_OUT 7
 
 /* Function prototypes */
 /* Prints instructions on how to use the program. */
@@ -43,10 +41,6 @@ static int delete_nftw_cb(const char *path, const struct stat *sb,
 static void list_pages(void);
 /* Returns a file path to a given page. */
 static char *find_page(const char *page_name);
-/* Enables VT100 mode on Win10 1503+ ConHost & wt+mintty; else, empty. */
-static void setup_console(void);
-/* Restores previous mode on Win10 1503+ ConHost & wt+mintty; else, empty. */
-static void restore_console(void);
 /* Prints a given page. */
 static void display_page(const char *dest_path);
 /* Opens index file performing all the necessary checking. */
@@ -302,30 +296,7 @@ find_page(const char *page_name)
 	fclose(tldr_index);
 	return NULL;
 }
-#ifdef _WIN32
-static DWORD  outmode_init;  /* will be set to initial console mode value. */
-static HANDLE stdout_handle; /* handle for current console session. */
-/* ref: https://docs.microsoft.com/en-us/windows/console/setconsolemode */
-void
-setup_console(void)
-{
-	stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	GetConsoleMode(stdout_handle, &outmode_init);
-	if (!SetConsoleMode(stdout_handle, ENABLE_WIN_VT100_OUT)){
-		fprintf(stderr, "\nyou are likely using an older version of Windows,"
-		"\nwhich is not yet compatible with this client\n");
-		exit(1);
-	}
-}
-void
-restore_console(void)
-{	/* Error catching would be superfluous here given program flow. */
-	SetConsoleMode(stdout_handle, outmode_init);
-}
-#else
-void setup_console(void){}
-void restore_console(void){}
-#endif
+
 void
 display_page(const char *page_name)
 {
@@ -348,7 +319,6 @@ display_page(const char *page_name)
 	page = fopen(buf, "r");
 	if (page == NULL)
 		err(1, "cannot open %s", buf);
-	setup_console(); /* Enables VT100 processing in Win10 1503+ */
 	while (fgets(buf, BUF_SIZE, page)) {
 		if (strcmp(buf, "\n") == 0) {
 			continue; /* Skip empty lines. */
@@ -372,7 +342,6 @@ display_page(const char *page_name)
 
 	}
 	fclose(page);
-	restore_console(); /* Restores previous console mode in Win10 1503+ */
 }
 
 FILE *
