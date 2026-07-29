@@ -150,7 +150,7 @@ extract_pages(FILE *temp_file)
 	struct archive       *archp;
 	struct archive_entry *entryp;
 
-	rewind(temp_file);
+	rewind(temp_file); /* Rewind after download. */
 
 	archp = archive_read_new();
 	if (archp == NULL)
