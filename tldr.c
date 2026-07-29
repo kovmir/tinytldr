@@ -77,7 +77,7 @@ print_usage(void)
 {
 	printf("USAGE: tldr [options] <[platform/]command>\n\n"
 	    "[options]\n"
-	    "\t-u\tfetch lastest copies of man pages\n"
+	    "\t-u\tfetch lastest copies of tldr pages\n"
 	    "\t-d\tdelete pages from disk\n"
 	    "\t-i\trebuild pages index\n"
 	    "\t-l\tlist all available pages\n"
