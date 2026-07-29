@@ -22,16 +22,6 @@
 #define BUF_SIZE 4096
 #define D_NAME entry->d_name
 #define ENABLE_WIN_VT100_OUT 7
-#define STRNCPY_TMP_DIR(buf, size) \
-	do { \
-		if (getenv("TEMP") != NULL) \
-			strncpy(buf, getenv("TEMP"), size-1); \
-		else if (getenv("TEMPDIR") != NULL) \
-			strncpy(buf, getenv("TEMPDIR"), size-1); \
-		else \
-			strncpy(buf, "/tmp", BUF_SIZE); \
-	} while(0)
-
 
 /* Function prototypes */
 /* Prints instructions on how to use the program. */
@@ -39,9 +29,9 @@ static void print_usage(void);
 /* Print the contents of 'config.h'. */
 static void print_config(void);
 /* Downloads pages. */
-static void fetch_pages(void);
+static void fetch_pages(FILE *temp_file);
 /* Extracts pages and put them in place. */
-static void extract_pages(void);
+static void extract_pages(FILE *temp_file);
 /* Creates index file of all pages. */
 static void index_pages(void);
 static int index_nftw_cb(const char *path, const struct stat *sb,
@@ -137,27 +127,15 @@ print_config(void)
 }
 
 void
-fetch_pages(void)
+fetch_pages(FILE *temp_file)
 {
 	CURL    *curl_handle;
 	CURLcode curl_res;                  /* Curl operation result. */
 	char     curl_err[CURL_ERROR_SIZE]; /* Curl error message buffer. */
 
-	char zip_path[BUF_SIZE]; /* Downloaded archive path. */
-	FILE *zip;               /* Downloaded archive. */
-
-	STRNCPY_TMP_DIR(zip_path, BUF_SIZE);
-	strcat(zip_path, "/tldr_pages.zip");
-	zip_path[BUF_SIZE-1] = 0;
-
-	/* Write in binary mode to avoid mangling with CRLFs in Windows. */
-	zip = fopen(zip_path, "wb");
-	if (zip == NULL)
-		err(1, "failed to open %s", zip_path);
-
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl_handle = curl_easy_init();
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, zip);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, temp_file);
 	curl_easy_setopt(curl_handle, CURLOPT_URL, PAGES_URL);
 	curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, curl_err);
 
@@ -165,31 +143,21 @@ fetch_pages(void)
 
 	curl_easy_cleanup(curl_handle);
 	curl_global_cleanup();
-	fclose(zip);
 
 	if (curl_res != CURLE_OK)
 		errx(1, "failed to fetch pages: %s", curl_err);
 }
 
 void
-extract_pages(void)
+extract_pages(FILE *temp_file)
 {
-	FILE *tldr_archive;        /* Downloaded pages archive. */
 	char  src_path[BUF_SIZE];  /* Path within archive to extract from. */
 	char  dest_path[BUF_SIZE]; /* Save the extracted pages here. */
-	char  zip_path[BUF_SIZE];  /* Downloaded archive path. */
-
 	int                   ares; /* libarchive function results. */
 	struct archive       *archp;
 	struct archive_entry *entryp;
 
-	STRNCPY_TMP_DIR(zip_path, BUF_SIZE);
-	strcat(zip_path, "/tldr_pages.zip");
-	zip_path[BUF_SIZE-1] = 0;
-
-	tldr_archive = fopen(zip_path, "r");
-	if (tldr_archive == NULL)
-		err(1, "failed to open %s", zip_path);
+	rewind(temp_file);
 
 	archp = archive_read_new();
 	if (archp == NULL)
@@ -197,7 +165,7 @@ extract_pages(void)
 
 	archive_read_support_format_zip(archp);
 
-	ares = archive_read_open_FILE(archp, tldr_archive);
+	ares = archive_read_open_FILE(archp, temp_file);
 	if (ares != ARCHIVE_OK) {
 		errx(1, "failed to archive_read_open_FILE(): %s",
 		     archive_error_string(archp));
@@ -234,8 +202,6 @@ extract_pages(void)
 		}
 	}
 	archive_read_free(archp);
-	fclose(tldr_archive);
-	remove(zip_path);
 }
 
 void
@@ -433,16 +399,23 @@ int
 main(int argc, char *argv[])
 {
 	int opt;
+	FILE *temp_file;
 
 	while ((opt = getopt(argc, argv, "udilhcv")) != -1) {
 		switch (opt) {
 		case 'u':
+			temp_file = tmpfile();
+
 			puts("Fetching pages...");
-			fetch_pages();
+			fetch_pages(temp_file);
 			puts("Extracting pages...");
-			extract_pages();
+			extract_pages(temp_file);
+
+			fclose(temp_file);
+
 			puts("Indexing pages...");
 			index_pages();
+
 			return 0;
 		case 'd':
 			puts("Deleting pages...");
