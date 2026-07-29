@@ -20,7 +20,6 @@
 
 /* Constants and Macros */
 #define BUF_SIZE 4096
-#define D_NAME entry->d_name
 #define ENABLE_WIN_VT100_OUT 7
 
 /* Function prototypes */
