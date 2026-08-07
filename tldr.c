@@ -4,136 +4,119 @@
 /* Includes */
 #include <assert.h>
 #include <dirent.h>
-#include <stdbool.h>
 #include <err.h>
+#include <fcntl.h>
+#include <fnmatch.h>
+#include <fts.h>
 #include <ftw.h>
 #include <getopt.h>
+#include <limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-/* cURL */
 #include <curl/curl.h>
-/* libarchive */
 #include <archive.h>
 #include <archive_entry.h>
 
+#include "tldr.h"
+
 /* Constants and Macros */
-#define BUF_SIZE 4096
+#define MAX_LINE_LEN 1024 /* Maximal tldr page line length. */
+#define HEADING_TOKEN '#'
+#define SUMMARY_TOKEN '>'
+#define COMMENT_TOKEN '-'
+#define COMMAND_TOKEN '`'
+
+/* Typedefs */
+struct Config {
+	char *pages_url;
+	char *user_agent;
+	char *pages_home;
+	char *heading_style;
+	char *summary_style;
+	char *comment_style;
+	char *command_style;
+	char *reset_style;
+	int skip_empty;
+	int apply_styles;
+	FILE *out;
+};
 
 /* Function prototypes */
-/* Prints instructions on how to use the program. */
-static void print_usage(void);
-/* Print the contents of 'config.h'. */
-static void print_config(void);
-/* Downloads pages. */
-static void fetch_pages(FILE *temp_file);
-/* Extracts pages and put them in place. */
-static void extract_pages(FILE *temp_file);
-/* Creates index file of all pages. */
-static void index_pages(void);
-static int index_nftw_cb(const char *path, const struct stat *sb,
-				int typeflag, struct FTW *ftwbuf);
-/* Delete all pages from disk. */
-static void delete_pages(void);
-static int delete_nftw_cb(const char *path, const struct stat *sb,
-				int typeflag, struct FTW *ftwbuf);
-/* Prints all page names. */
-static void list_pages(void);
-/* Returns a file path to a given page. */
-static char *find_page(const char *page_name);
-/* Prints a given page. */
-static void display_page(const char *dest_path);
-/* Opens index file performing all the necessary checking. */
-static FILE *open_index(const char *mode);
+static int entcmp(const FTSENT **a, const FTSENT **b);
 
-#ifndef DEBUG
-/* Save locations, styling, and other settings are set via config.h. */
-#include "config.h"
-#else
-/* Code under DEBUGs is for unit testing. */
-static const char *PAGES_URL = DEBUG_PAGES_URL;
-static const char *PAGES_DIR = DEBUG_PAGES_DIR;
-static const char *PAGES_PATH = DEBUG_PAGES_PATH;
-static const char *PAGES_LANG = DEBUG_PAGES_LANG;
-static const char *HEADING_STYLE = DEBUG_HEADING_STYLE;
-static const char *SUBHEADING_STYLE = DEBUG_SUBHEADING_STYLE;
-static const char *COMMAND_DESC_STYLE = DEBUG_COMMAND_DESC_STYLE;
-static const char *COMMAND_STYLE = DEBUG_COMMAND_STYLE;
-#endif
-
-/* Resets console styling back to default (usually white-on-black),
-   and clears rest of current line for consistency on Windows. */
-#ifndef DEBUG
-static const char *RESET_STYLING = "\033[0m\033[0K";
-#else
-static const char *RESET_STYLING = "-";
-#endif /* DEBUG */
-/* Index file to hold available page names.
- * This one is global because I pass it to ftw(3) callbacks. */
-static FILE *tldr_index;
-
-inline void
-print_usage(void)
+Config *
+create_cfg(const ConfigOpts *opts)
 {
-	printf("USAGE: tldr [options] <[platform/]command>\n\n"
-	    "[options]\n"
-	    "\t-u\tfetch lastest copies of tldr pages\n"
-	    "\t-d\tdelete pages from disk\n"
-	    "\t-i\trebuild pages index\n"
-	    "\t-l\tlist all available pages\n"
-	    "\t-h\tshow this help message\n"
-	    "\t-c\tview compiled config values\n"
-	    "\t-v\tdisplay program version\n\n"
-	    "[platform]\n"
-	    "\tandroid\n"
-	    "\tcommon\n"
-	    "\tfreebsd\n"
-	    "\tlinux\n"
-	    "\tnetbsd\n"
-	    "\topenbsd\n"
-	    "\tosx\n"
-	    "\tsunos\n"
-	    "\twindows\n\n"
-	    "<command>\n"
-	    "\tShow examples for this command\n");
-}
+	assert(opts != NULL);
 
-inline void
-print_config(void)
-{
-	printf("PAGES_URL='%s'\n"
-		"PAGES_DIR='%s'\n"
-		"PAGES_PATH='%s'\n"
-		"PAGES_LANG='%s'\n"
-		"%sHEADING_STYLE%s\n"
-		"%sSUBHEADING_STYLE%s\n"
-		"%sCOMMAND_DESC_STYLE%s\n"
-		"%sCOMMAND_STYLE%s\n",
-		PAGES_URL,
-		PAGES_DIR,
-		PAGES_PATH,
-		PAGES_LANG,
-		HEADING_STYLE, RESET_STYLING,
-		SUBHEADING_STYLE, RESET_STYLING,
-		COMMAND_DESC_STYLE, RESET_STYLING,
-		COMMAND_STYLE, RESET_STYLING);
+	Config *cfg = malloc(sizeof(Config));
+	if (cfg == NULL)
+		return NULL;
+
+	cfg->pages_url     = opts->pages_url     ? strdup(opts->pages_url)     : NULL;
+	cfg->user_agent    = opts->user_agent    ? strdup(opts->user_agent)    : NULL;
+	cfg->pages_home    = opts->pages_home    ? strdup(opts->pages_home)    : NULL;
+	cfg->heading_style = opts->heading_style ? strdup(opts->heading_style) : NULL;
+	cfg->summary_style = opts->summary_style ? strdup(opts->summary_style) : NULL;
+	cfg->command_style = opts->command_style ? strdup(opts->command_style) : NULL;
+	cfg->comment_style = opts->comment_style ? strdup(opts->comment_style) : NULL;
+	cfg->reset_style   = opts->reset_style   ? strdup(opts->reset_style)   : NULL;
+
+	cfg->skip_empty   = opts->skip_empty;
+	cfg->apply_styles = opts->apply_styles;
+	cfg->out          = opts->out;
+
+	if ((cfg->pages_url     == NULL) ||
+	    (cfg->pages_home    == NULL) ||
+	    (cfg->heading_style == NULL) ||
+	    (cfg->summary_style == NULL) ||
+	    (cfg->command_style == NULL) ||
+	    (cfg->comment_style == NULL) ||
+	    (cfg->reset_style   == NULL)) {
+		return NULL;
+	}
+	return cfg;
 }
 
 void
-fetch_pages(FILE *temp_file)
+destroy_cfg(Config *cfg)
+{
+	if (cfg == NULL)
+		return;
+	free(cfg->pages_url);
+	free(cfg->pages_home);
+	free(cfg->heading_style);
+	free(cfg->summary_style);
+	free(cfg->command_style);
+	free(cfg->comment_style);
+	free(cfg->reset_style);
+	free(cfg);
+}
+
+int
+fetch_pages(const Config *cfg, FILE *dest)
 {
 	CURL    *curl_handle;
 	CURLcode curl_res;                  /* Curl operation result. */
 	char     curl_err[CURL_ERROR_SIZE]; /* Curl error message buffer. */
 
-	assert(temp_file != NULL);
+	assert(dest != NULL);
+	assert(cfg != NULL);
 
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl_handle = curl_easy_init();
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, temp_file);
-	curl_easy_setopt(curl_handle, CURLOPT_URL, PAGES_URL);
 	curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, curl_err);
+	curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1L);
+	curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1L);
+	curl_easy_setopt(curl_handle, CURLOPT_MAXREDIRS, 5L);
+	curl_easy_setopt(curl_handle, CURLOPT_URL, cfg->pages_url);
+	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, cfg->user_agent);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, dest);
 
 	curl_res = curl_easy_perform(curl_handle);
 
@@ -141,301 +124,212 @@ fetch_pages(FILE *temp_file)
 	curl_global_cleanup();
 
 	if (curl_res != CURLE_OK)
-		errx(1, "failed to fetch pages: %s", curl_err);
-}
-
-void
-extract_pages(FILE *temp_file)
-{
-	char  src_path[BUF_SIZE];  /* Path within archive to extract from. */
-	char  dest_path[BUF_SIZE]; /* Save the extracted pages here. */
-	int                   ares; /* libarchive function results. */
-	struct archive       *archp;
-	struct archive_entry *entryp;
-
-	assert(temp_file != NULL);
-
-	rewind(temp_file); /* Rewind after download. */
-
-	archp = archive_read_new();
-	if (archp == NULL)
-		errx(1, "failed to archive_read_new()");
-
-	archive_read_support_format_zip(archp);
-
-	ares = archive_read_open_FILE(archp, temp_file);
-	if (ares != ARCHIVE_OK) {
-		errx(1, "failed to archive_read_open_FILE(): %s",
-		     archive_error_string(archp));
-	}
-
-	snprintf(src_path, BUF_SIZE, "%s/%s/", PAGES_DIR, PAGES_LANG);
-
-	/* Find the directory within the archive to extract from. */
-	while (archive_read_next_header(archp, &entryp) != ARCHIVE_EOF) {
-		if (strcmp(archive_entry_pathname(entryp), src_path) == 0)
-			break;
-	}
-	while (archive_read_next_header(archp, &entryp) != ARCHIVE_EOF) {
-		if (strncmp(archive_entry_pathname(entryp), src_path,
-			    strlen(src_path)) != 0) {
-			break; /* Done processing the pages directory. */
-		}
-
-		if (PAGES_PATH[0] == '~') {
-			snprintf(dest_path, BUF_SIZE, "%s/%s/%s",
-			         getenv("HOME"), PAGES_PATH+2,
-			         strchr(archive_entry_pathname(entryp),'/')+1);
-		} else {
-			snprintf(dest_path, BUF_SIZE, "%s/%s",
-			         PAGES_PATH,
-			         strchr(archive_entry_pathname(entryp),'/')+1);
-		}
-
-		archive_entry_set_pathname(entryp, dest_path);
-		ares = archive_read_extract(archp, entryp, 0);
-		if (ares != ARCHIVE_OK) {
-			errx(1, "failed to archive_read_extract(): %s",
-				archive_error_string(archp));
-		}
-	}
-	archive_read_free(archp);
-}
-
-void
-index_pages(void)
-{
-	char path[BUF_SIZE];
-
-	if (PAGES_PATH[0] == '~') {
-		snprintf(path, BUF_SIZE, "%s/%s/%s",
-		         getenv("HOME"), PAGES_PATH+2, PAGES_LANG);
-	} else {
-		snprintf(path, BUF_SIZE, "%s/%s", PAGES_PATH, PAGES_LANG);
-	}
-
-	tldr_index = open_index("w");
-	nftw(path, index_nftw_cb, 10, FTW_PHYS);
-	fclose(tldr_index);
+		warnx("unable to fetch pages: %s", curl_err);
+	return (curl_res == CURLE_OK) ? 0 : -1;
 }
 
 int
-index_nftw_cb(const char *path, const struct stat *sb,
-			int typeflag, struct FTW *ftwbuf)
+extract_pages(const Config *cfg, FILE *archive)
 {
-	(void)sb; /* Suppress compiler warnings about unused arguments. */
-	(void)ftwbuf;
+	struct archive *a = NULL;
+	struct archive *ext = NULL;
+	struct archive_entry *entry;
+	int r;
+	char *path;
+	size_t len;
+	const char *entry_path;
 
-	if (typeflag != FTW_F)
-		return 0; /* Skip everything except files. */
+	assert(cfg != NULL);
+	assert(archive != NULL);
 
-	/* Truncate the full path to include only the filename and last dir. */
-	fprintf(tldr_index, "%s\n",
-	        strchr(strstr(path, PAGES_LANG)+1, '/')+1);
-	return 0;
-}
-
-void
-delete_pages(void)
-{
-	char path[BUF_SIZE];
-
-	if (PAGES_PATH[0] == '~') {
-		snprintf(path, BUF_SIZE, "%s/%s",
-		         getenv("HOME"), PAGES_PATH+2);
-	} else {
-		strncpy(path, PAGES_PATH, BUF_SIZE);
+	a = archive_read_new();
+	if (a == NULL) {
+		warnx("archive_read_new failed");
+		return -1;
 	}
-	nftw(path, delete_nftw_cb, 64, FTW_DEPTH | FTW_PHYS);
+
+	archive_read_support_filter_all(a);
+	archive_read_support_format_all(a);
+
+	r = archive_read_open_FILE(a, archive);
+	if (r != ARCHIVE_OK) {
+		warnx("archive_read_open_FILE: %s", archive_error_string(a));
+		goto out;
+	}
+
+	ext = archive_write_disk_new();
+	if (ext == NULL) {
+		warnx("archive_write_disk_new failed");
+		r = ARCHIVE_FATAL;
+		goto out;
+	}
+
+	archive_write_disk_set_options(ext, 0);
+
+	while ((r = archive_read_next_header(a, &entry)) == ARCHIVE_OK) {
+		entry_path = archive_entry_pathname(entry);
+		if (entry_path == NULL)
+			entry_path = "";
+
+		/* +2 for / and \0 */
+		len = strlen(cfg->pages_home) + strlen(entry_path) + 2;
+		if ((path = malloc(len)) == NULL) {
+			warn("malloc");
+			r = ARCHIVE_FATAL;
+			goto out;
+		}
+		snprintf(path, len, "%s/%s", cfg->pages_home, entry_path);
+
+		archive_entry_set_pathname(entry, path);
+		free(path);
+
+		r = archive_read_extract2(a, entry, ext);
+		if (r != ARCHIVE_OK) {
+			warnx("archive_read_extract2: %s", archive_error_string(a));
+			goto out;
+		}
+	}
+
+	if (r != ARCHIVE_EOF)
+		warnx("archive_read_next_header: %s", archive_error_string(a));
+
+out:
+	archive_write_free(ext);
+	archive_read_close(a);
+	archive_read_free(a);
+
+	return (r == ARCHIVE_EOF) ? 0 : -1;
 }
 
 int
-delete_nftw_cb(const char *path, const struct stat *sb,
-				int typeflag, struct FTW *ftwbuf)
+entcmp(const FTSENT **a, const FTSENT **b)
 {
-	(void)sb; /* Suppress compiler warnings about unused arguments. */
-	(void)ftwbuf;
-	(void)typeflag;
-
-	if (remove(path) != 0)
-		err(1, "failed to remove %s", path);
-	return 0;
-}
-
-void
-list_pages(void)
-{
-	char buf[BUF_SIZE];
-
-	tldr_index = open_index("r");
-	while(fgets(buf, BUF_SIZE, tldr_index))
-		printf("%s", buf);
-	fclose(tldr_index);
+	return strcmp((*a)->fts_name, (*b)->fts_name);
 }
 
 char *
-find_page(const char *page_name)
+find_page(const Config *cfg, const char *name, const char *platform)
 {
-	static char index_entry[BUF_SIZE];
-	char match[BUF_SIZE];
+	char *path_argv[] = {cfg->pages_home, NULL};
+	char *found = NULL;
+	FTS *tree;
+	FTSENT *f;
 
-	snprintf(match, BUF_SIZE, "%s.md\n", page_name);
+	assert(cfg != NULL);
+	assert(name != NULL);
 
-	tldr_index = open_index("r");
-	while(fgets(index_entry, BUF_SIZE, tldr_index)) {
-		/* Index entries must be of the form platform/command. */
-		assert(strstr(index_entry, "/") != NULL);
+	tree = fts_open(path_argv, FTS_LOGICAL|FTS_NOSTAT, entcmp);
+	if (tree == NULL) {
+		warn("fts_open");
+		return NULL;
+	}
 
-		/* page_name is either 'command' or 'platform/command'. */
-		if (strchr(page_name, '/')) { /* platform/command */
-			if(strncmp(match, index_entry, BUF_SIZE) == 0) {
-				*strchr(index_entry, '\n') = 0;
-				fclose(tldr_index);
-				return index_entry;
+	while ((f = fts_read(tree))) {
+		if (f->fts_info != FTS_F)
+			continue; /* Not a file. */
+
+		if (strcmp(f->fts_name, name) == 0) {
+			/* Only name match. */
+			if (platform == NULL) {
+				found = f->fts_path;
+				break;
 			}
-		} else { /* command */
-			if (strncmp(match,
-				    strchr(index_entry, '/')+1,
-				    BUF_SIZE) == 0) {
-				*strchr(index_entry, '\n') = 0;
-				fclose(tldr_index);
-				return index_entry;
+			/* Both name and platform match. */
+			if (strcmp(f->fts_parent->fts_name, platform) == 0) {
+				found = f->fts_path;
+				break;
 			}
 		}
 	}
-	fclose(tldr_index);
-	return NULL;
-}
 
-void
-display_page(const char *page_name)
-{
-	char *index_entry; /* category/filename.md */
-	char  buf[BUF_SIZE];
-	FILE *page;
+	if (found != NULL)
+		found = strdup(found);
 
-	assert(page_name != NULL);
-
-	index_entry = find_page(page_name);
-	if (index_entry == NULL)
-		errx(1, "%s has not been found", page_name);
-
-	if (PAGES_PATH[0] == '~') {
-		snprintf(buf, BUF_SIZE, "%s/%s/%s/%s", getenv("HOME"),
-		         PAGES_PATH+2, PAGES_LANG, index_entry);
-	} else {
-		snprintf(buf, BUF_SIZE, "%s/%s/%s",
-		         PAGES_PATH, PAGES_LANG, index_entry);
-	}
-
-	page = fopen(buf, "r");
-	if (page == NULL)
-		err(1, "cannot open %s", buf);
-	while (fgets(buf, BUF_SIZE, page)) {
-		if (strcmp(buf, "\n") == 0) {
-			continue; /* Skip empty lines. */
-		}
-		if (buf[0] == '#') {
-			printf("%s%s%s",
-			       HEADING_STYLE, buf, RESET_STYLING);
-		}
-		if (buf[0] == '>') {
-			printf("%s%s%s",
-			       SUBHEADING_STYLE, buf, RESET_STYLING);
-		}
-		if (buf[0] == '-') {
-			printf("%s%s%s",
-			       COMMAND_DESC_STYLE, buf, RESET_STYLING);
-		}
-		if (buf[0] == '`') {
-			printf("%s%s%s",
-			       COMMAND_STYLE, buf, RESET_STYLING);
-		}
-
-	}
-	fclose(page);
-}
-
-FILE *
-open_index(const char *mode)
-{
-	char  path[BUF_SIZE];
-	FILE *fp;
-
-	assert(mode != NULL);
-
-	if (PAGES_PATH[0] == '~') {
-		snprintf(path, BUF_SIZE, "%s/%s/%s",
-		         getenv("HOME"), PAGES_PATH+2, "index");
-	} else {
-		snprintf(path, BUF_SIZE, "%s/%s", PAGES_PATH, "index");
-	}
-
-	fp = fopen(path, mode);
-	if (fp == NULL)
-		err(1, "failed to open index, probably run `tldr -u`");
-	return fp;
+	fts_close(tree);
+	return found;
 }
 
 int
-main(int argc, char *argv[])
+print_page(const Config *cfg, FILE *page)
 {
-	int opt;
-	FILE *temp_file;
+	char line[MAX_LINE_LEN];
+	char *n_ptr;
+	char *style = NULL;
+	int n;
 
-	/* Paths like ~foo/bar are invalid. */
-	if (PAGES_PATH[0] == '~')
-		assert(PAGES_PATH[1] == '/');
-	/* In certain environments HOME may not be available. */
-	assert(getenv("HOME") != NULL);
+	assert(cfg != NULL);
+	assert(page != NULL);
 
-	while ((opt = getopt(argc, argv, "udilhcv")) != -1) {
-		switch (opt) {
-		case 'u':
-			temp_file = tmpfile();
+	while (fgets(line, MAX_LINE_LEN, page) != NULL) {
+		/* Skip empty lines if needed. */
+		if (cfg->skip_empty && line[0] == '\n')
+			continue;
 
-			puts("Fetching pages...");
-			fetch_pages(temp_file);
-			puts("Extracting pages...");
-			extract_pages(temp_file);
+		/* Discard end-of-line character. */
+		n_ptr = strstr(line, "\n");
+		if (n_ptr != NULL)
+			*n_ptr = 0;
 
-			fclose(temp_file);
+		/* Choose styling if needed. */
+		if (cfg->apply_styles == 1) {
+			switch (line[0]) {
+			case HEADING_TOKEN:
+				style = cfg->heading_style;
+				break;
+			case SUMMARY_TOKEN:
+				style = cfg->summary_style;
+				break;
+			case COMMENT_TOKEN:
+				style = cfg->comment_style;
+				break;
+			case COMMAND_TOKEN:
+				style = cfg->command_style;
+				break;
+			default:
+				style = NULL;
+			}
+		}
 
-			puts("Indexing pages...");
-			index_pages();
+		/* Print page. */
+		if (style != NULL) {
+			n = fprintf(cfg->out, "%s%s%s\n", style, line, cfg->reset_style);
+		} else {
+			n = fprintf(cfg->out, "%s\n", line);
+		}
 
-			return 0;
-		case 'd':
-			puts("Deleting pages...");
-			delete_pages();
-			return 0;
-		case 'i':
-			puts("Indexing pages...");
-			index_pages();
-			return 0;
-		case 'l':
-			list_pages();
-			return 0;
-		case 'h':
-			print_usage();
-			return 0;
-		case 'c':
-			print_config();
-			return 0;
-		case 'v':
-			puts(GIT_DESC" "BUILD_TYPE);
-			return 0;
-		default:
-			print_usage();
-			return 1;
+		if (n < 0) {
+			warn("unable to print page");
+			return -1;
 		}
 	}
+	return 0;
+}
 
-	if (argc != 2) {
-		print_usage();
-		return 1;
+int
+list_pages(const Config *cfg)
+{
+	const char *pattern = "*.md";
+	char *path_argv[] = {cfg->pages_home, NULL};
+	FTS *tree;
+	FTSENT *f;
+
+	assert(cfg != NULL);
+
+	tree = fts_open(path_argv, FTS_LOGICAL|FTS_NOSTAT, entcmp);
+	if (tree == NULL) {
+		warn("fts_open");
+		return -1;
 	}
 
-	display_page(argv[1]);
+	while ((f = fts_read(tree))) {
+		if (f->fts_info != FTS_F)
+			continue; /* Not a file. */
+
+		if (fnmatch(pattern, f->fts_name, FNM_PERIOD) == 0) {
+			fprintf(cfg->out, "%s/%s\n",
+				f->fts_parent->fts_name, f->fts_name);
+		}
+	}
+	fts_close(tree);
 	return 0;
 }

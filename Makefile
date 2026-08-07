@@ -1,90 +1,39 @@
 CC ?= cc
 
-LIBNOTIFY_LIBS = $(shell pkg-config --libs libarchive libcurl)
-LIBNOTIFY_INCS = $(shell pkg-config --cflags libarchive libcurl)
+LIB_CFLAGS := $(shell pkg-config --cflags libcurl libarchive)
+LIB_LDLIBS := $(shell pkg-config --libs libcurl libarchive)
+GIT_VERSION := $(shell git describe --tags --always --dirty)
 
-LIBS += $(LIBNOTIFY_LIBS)
-INCS += $(LIBNOTIFY_INCS)
-
-CFLAGS += -std=c23
+CFLAGS += -std=c99
+CFLAGS += -g
+CFLAGS += -O2
 CFLAGS += -pedantic
 CFLAGS += -Wall
 CFLAGS += -Wextra
-CFLAGS += -Wcast-align
-CFLAGS += -Wstrict-prototypes
-CFLAGS += -Wundef
-CFLAGS += -Wno-format-truncation
+CFLAGS += -D_POSIX_C_SOURCE=200809L
+CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
+CFLAGS += $(LIB_CFLAGS)
 
-CFLAGS += -D_XOPEN_SOURCE=500
-CFLAGS += -DGIT_DESC=\"$(shell git describe --tags --always --dirty)\"
+LDLIBS += $(LIB_LDLIBS)
 
-CFLAGS += $(INCS)
-LDFLAGS += $(LIBS)
+BUILD_BIN = tldr
+TEST_BIN  = tldr_test
 
-PREFIX ?= /usr/local
-PROJECT = tldr
+all: build
 
-INSTALL ?= install
-STRIP ?= strip
+build: $(BUILD_BIN)
 
-# Config values for debug build.
-PAGES_URL = http://localhost:1337/archive.zip
-PAGES_DIR = to_be_archived_tldrpages
-PAGES_PATH = ./extracted_tldrpages
-PAGES_LANG = lang
-HEADING_STYLE = ^
-SUBHEADING_STYLE = ^
-COMMAND_DESC_STYLE = ^
-COMMAND_STYLE = ^
+test: $(TEST_BIN)
 
-build: CFLAGS += -DBUILD_TYPE=\"release\"
-build:
-	$(CC) -O2 $(CFLAGS) $(PROJECT).c $(LDFLAGS) -o $(PROJECT)
+$(BUILD_BIN): main.o tldr.o
 
-debug: CFLAGS += -DBUILD_TYPE=\"debug\"
-debug:
-	$(CC) -O0 -g $(CFLAGS) \
-		-DDEBUG \
-		-DDEBUG_PAGES_URL=\"$(PAGES_URL)\" \
-		-DDEBUG_PAGES_DIR=\"$(PAGES_DIR)\" \
-		-DDEBUG_PAGES_PATH=\"$(PAGES_PATH)\" \
-		-DDEBUG_PAGES_LANG=\"$(PAGES_LANG)\" \
-		-DDEBUG_HEADING_STYLE=\"$(HEADING_STYLE)\" \
-		-DDEBUG_SUBHEADING_STYLE=\"$(SUBHEADING_STYLE)\" \
-		-DDEBUG_COMMAND_DESC_STYLE=\"$(COMMAND_DESC_STYLE)\" \
-		-DDEBUG_COMMAND_STYLE=\"$(COMMAND_STYLE)\" \
-		$(PROJECT).c $(LDFLAGS) -o $(PROJECT)
+$(TEST_BIN): tldr_test.o tldr.o
 
-test: debug
-	./test.sh $(PAGES_URL) $(PAGES_DIR) $(PAGES_PATH) $(PAGES_LANG)
+main.o: config.h tldr.h
 
-gdb: debug
-	gdb ./$(PROJECT)
-
-memcheck: debug
-	valgrind --leak-check=yes ./$(PROJECT)
-
-memcheck_v: debug
-	valgrind --leak-check=yes -v ./$(PROJECT)
-
-memcheck_full: debug
-	valgrind --leak-check=full --show-leak-kinds=all ./$(PROJECT)
+tldr.o: tldr.h
 
 clean:
-	rm -f ./$(PROJECT)
+	rm -f *.o $(BUILD_BIN) $(TEST_BIN)
 
-strip:
-	$(STRIP) ./$(PROJECT)
-
-bench:
-	hyperfine -N './tldr tar'
-
-install:
-	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
-	$(INSTALL) ./$(PROJECT) "$(DESTDIR)$(PREFIX)/bin/$(PROJECT)"
-
-uninstall:
-	rm -f "$(DESTDIR)$(PREFIX)/bin/$(PROJECT)"
-	rmdir --ignore-fail-on-non-empty "$(DESTDIR)$(PREFIX)/bin"
-
-.PHONY: all debug gdb memcheck memcheck_v memcheck_full clean strip install uninstall
+.PHONY: all build test clean

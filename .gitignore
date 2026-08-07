@@ -1,4 +1,3 @@
 tldr
-archive.zip
-extracted_tldrpages/
-to_be_archived_tldrpages/
+tldr_test
+*.o
