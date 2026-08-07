@@ -16,11 +16,11 @@ CFLAGS += $(LIB_CFLAGS)
 
 LDLIBS += $(LIB_LDLIBS)
 
-BUILD_BIN = tldr
-TEST_BIN  = tldr_test
+BUILD_BIN := tldr
+TEST_BIN  := tldr_test
 
 PREFIX ?= /usr/local
-INSTALL ?= install
+MANPREFIX ?= $(PREFIX)/share/man
 
 all: build
 
@@ -37,12 +37,12 @@ main.o: config.h tldr.h
 tldr.o: tldr.h
 
 install:
-	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
-	$(INSTALL) ./$(BUILD_BIN) "$(DESTDIR)$(PREFIX)/bin/$(BUILD_BIN)"
+	install -Dm755 ./$(BUILD_BIN) "$(DESTDIR)$(PREFIX)/bin/$(BUILD_BIN)"
+	install -Dm644 ./tldr.1 "$(DESTDIR)$(MANPREFIX)/man1/tldr.1"
 
 uninstall:
 	rm -f "$(DESTDIR)$(PREFIX)/bin/$(BUILD_BIN)"
-	rmdir --ignore-fail-on-non-empty "$(DESTDIR)$(PREFIX)/bin"
+	rm -f "$(DESTDIR)$(MANPREFIX)/man1/tldr.1"
 
 clean:
 	rm -f *.o $(BUILD_BIN) $(TEST_BIN)

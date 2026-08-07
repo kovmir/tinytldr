@@ -1,0 +1,128 @@
+.TH TLDR 1 tinytldr
+.SH NAME
+tldr \- simplified man pages
+.SH SYNOPSIS
+.B tldr
+.RB [ \-h ]
+.RB [ \-l ]
+.RB [ \-p " " platform ]
+.RB [ \-t ]
+.RB [ \-u ]
+.RB [ \-v ]
+<page_name>...
+.SH DESCRIPTION
+tldr displays simplified, community-maintained man pages for command-line tools.
+First run
+.B tldr \-u
+to download the pages, then
+.B tldr <page_name>
+to view pages.
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Display a short option summary.
+.TP
+.BR \-l ", " \-\-list
+List all available pages, one per line.
+.TP
+.BR \-p ", " \-\-platform " " \fIplatform\fR
+Restrict page lookup to the given platform directory inside the page cache
+(e.g. "linux", "osx", "common"). When omitted, all platform directories are
+searched alphabetically, with the first match taking precedence.
+.TP
+.BR \-t ", " \-\-target
+Print the absolute path to the page rather than the page itself.
+.TP
+.BR \-u ", " \-\-update
+Download pages.
+.TP
+.BR \-v ", " \-\-version
+Print the program version.
+.SH FILES
+.TP
+.B ~/.local/share/tinytldr/pages/
+Default page cache directory. Populated by
+.B \-\-update
+and read by every other operation.
+.PP
+The directory layout inside the cache is one subdirectory per platform, each
+containing page-name.md files.
+.TP
+.B config.h
+Project-level configuration: download URL, cache location, and ANSI
+styling. Edit and recompile to change the defaults.
+.SH EXAMPLES
+.PP
+Fetch (or refresh) the local copy of the tldr-pages archive:
+.PP
+.RS
+.nf
+tldr \-u
+.fi
+.RE
+.PP
+Display the page for
+.BR tar :
+.PP
+.RS
+.nf
+tldr tar
+.fi
+.RE
+.PP
+Display the macOS-specific page for
+.BR tar :
+.PP
+.RS
+.nf
+tldr \-p osx tar
+.fi
+.RE
+.PP
+Display the page for
+.BR "git apply" :
+.PP
+.RS
+.nf
+tldr git apply
+.fi
+.RE
+.PP
+List every available page:
+.PP
+.RS
+.nf
+tldr \-l
+.fi
+.RE
+.PP
+Print the on-disk path of a page without rendering it:
+.PP
+.RS
+.nf
+tldr \-t git apply
+.fi
+.RE
+.SH CUSTOM PAGES
+.B tldr
+reads any
+.IB platform / page .md
+file placed under the page cache, so personal pages work without further
+configuration. Create a new subdirectory under the default cache and drop
+.IB name .md
+files into it:
+.PP
+.RS
+.nf
+TLDR_PAGES="$HOME/.local/share/tinytldr/pages"
+mkdir "$TLDR_PAGES/mypages"
+printf '# My custom page\\n' > "$TLDR_PAGES/mypages/testpage.md"
+tldr testpage
+.fi
+.RE
+.SH AUTHORS
+Ivan Kovmir with contributions from bilditup1.
+.SH SUPPORT
+Report bugs at
+.UR https://github.com/kovmir/tinytldr/issues
+.UE .
