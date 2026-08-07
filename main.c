@@ -76,7 +76,7 @@ parse_cli_opts(int argc, char *argv[])
 void
 print_help(FILE *out)
 {
-	fprintf(out, "usage: tldr [-h] [-l] [-p PLATFORM] [-u] [-v] PAGE...\n");
+	fprintf(out, "usage: tldr [-h] [-l] [-p PLATFORM] [-t] [-u] [-v] PAGE...\n");
 	fprintf(out, "\n");
 	fprintf(out, "Options:\n");
 	fprintf(out, "  -h, --help        show this help message\n");
