@@ -32,8 +32,8 @@ tldr -p windows scoop # One could specify a platform.
 tldr git apply # View git-apply.md
 ```
 
-This implementation does not not support [tldr-pages client specification][3],
-as it makes clients identical for no reason and goes against the minimalist
+This implementation does not support [tldr-pages client specification][3], as
+it makes clients identical for no reason and goes against the minimalist
 approach of this project.
 
 # DEPENDENCIES
