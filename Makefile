@@ -19,6 +19,9 @@ LDLIBS += $(LIB_LDLIBS)
 BUILD_BIN = tldr
 TEST_BIN  = tldr_test
 
+PREFIX ?= /usr/local
+INSTALL ?= install
+
 all: build
 
 build: $(BUILD_BIN)
@@ -33,7 +36,15 @@ main.o: config.h tldr.h
 
 tldr.o: tldr.h
 
+install:
+	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
+	$(INSTALL) ./$(BUILD_BIN) "$(DESTDIR)$(PREFIX)/bin/$(BUILD_BIN)"
+
+uninstall:
+	rm -f "$(DESTDIR)$(PREFIX)/bin/$(BUILD_BIN)"
+	rmdir --ignore-fail-on-non-empty "$(DESTDIR)$(PREFIX)/bin"
+
 clean:
 	rm -f *.o $(BUILD_BIN) $(TEST_BIN)
 
-.PHONY: all build test clean
+.PHONY: all build test install uninstall clean
